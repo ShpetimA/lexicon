@@ -1,12 +1,36 @@
 import { QueryClient } from "@tanstack/react-query";
-import { createRootRouteWithContext, Link } from "@tanstack/react-router";
+import {
+  createRootRouteWithContext,
+  Link,
+  useRouteContext,
+} from "@tanstack/react-router";
 import { HeadContent, Outlet, Scripts } from "@tanstack/react-router";
-import { ReactNode } from "react";
-import { ConvexReactClient } from "convex/react";
+import { ReactNode, useCallback, useMemo } from "react";
+import { ConvexReactClient, ConvexProviderWithAuth } from "convex/react";
 import { ConvexQueryClient } from "@convex-dev/react-query";
 import appCss from "../styles/app.css?url";
 import type { User } from "@workos-inc/node";
 import { getAuth, getSignInUrl } from "../authkit/serverFunctions";
+
+function useAuthFromRouter() {
+  const context = useRouteContext({ from: "__root__" });
+
+  const fetchAccessToken = useCallback(
+    async ({ forceRefreshToken }: { forceRefreshToken: boolean }) => {
+      return context.accessToken ?? null;
+    },
+    [context.accessToken],
+  );
+
+  return useMemo(
+    () => ({
+      isLoading: false,
+      isAuthenticated: !!context.user,
+      fetchAccessToken,
+    }),
+    [context.user, fetchAccessToken],
+  );
+}
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -31,9 +55,18 @@ export const Route = createRootRouteWithContext<{
       },
     ],
   }),
-  beforeLoad: async () => {
+  beforeLoad: async ({ context }) => {
     const { user, accessToken } = await getAuth();
     const url = await getSignInUrl();
+
+    if (context.convexClient) {
+      if (accessToken) {
+        context.convexClient.setAuth(() => Promise.resolve(accessToken));
+      } else {
+        context.convexClient.clearAuth();
+      }
+    }
+
     return { user, accessToken, signInUrl: url };
   },
   errorComponent: () => <div>Error</div>,
@@ -42,10 +75,14 @@ export const Route = createRootRouteWithContext<{
 });
 
 function Root() {
+  const { convexClient } = useRouteContext({ from: "__root__" });
+
   return (
-    <RootDocument>
-      <Outlet />
-    </RootDocument>
+    <ConvexProviderWithAuth client={convexClient} useAuth={useAuthFromRouter}>
+      <RootDocument>
+        <Outlet />
+      </RootDocument>
+    </ConvexProviderWithAuth>
   );
 }
 
