@@ -1,0 +1,42 @@
+{
+  "name": "lexicon",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@clerk/tanstack-react-start": "^0.26.9",
+    "@convex-dev/react-query": "^0.0.0-alpha.11",
+    "@convex-dev/workos": "^0.0.1",
+    "@tailwindcss/vite": "^4.1.17",
+    "@tanstack/devtools-vite": "^0.3.11",
+    "@tanstack/react-devtools": "^0.8.1",
+    "@tanstack/react-query": "^5.90.7",
+    "@tanstack/react-router": "^1.134.15",
+    "@tanstack/react-router-with-query": "^1.130.17",
+    "@tanstack/react-start": "^1.134.15",
+    "@workos-inc/authkit-react": "^0.13.0",
+    "@workos-inc/node": "^7.72.2",
+    "convex": "^1.28.2",
+    "iron-session": "^8.0.4",
+    "jose": "^6.1.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "tailwindcss": "^4.1.17"
+  },
+  "devDependencies": {
+    "@tanstack/react-query-devtools": "^5.90.2",
+    "@tanstack/react-router-devtools": "^1.134.15",
+    "@types/node": "^24.10.0",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "@vitejs/plugin-react": "^5.1.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.2.2",
+    "vite-tsconfig-paths": "^5.1.4"
+  }
+}
