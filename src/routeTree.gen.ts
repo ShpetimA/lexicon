@@ -13,6 +13,11 @@ import { Route as LogoutRouteImport } from './routes/logout'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthedTasksRouteImport } from './routes/_authed/tasks'
+import { Route as AuthedLocalesRouteImport } from './routes/_authed/locales'
+import { Route as AuthedEnvironmentsRouteImport } from './routes/_authed/environments'
+import { Route as AuthedEditorRouteImport } from './routes/_authed/editor'
+import { Route as AuthedCustomersRouteImport } from './routes/_authed/customers'
+import { Route as AuthedAppsRouteImport } from './routes/_authed/apps'
 import { Route as ApiAuthCallbackRouteImport } from './routes/api/auth/callback'
 
 const LogoutRoute = LogoutRouteImport.update({
@@ -34,6 +39,31 @@ const AuthedTasksRoute = AuthedTasksRouteImport.update({
   path: '/tasks',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedLocalesRoute = AuthedLocalesRouteImport.update({
+  id: '/locales',
+  path: '/locales',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedEnvironmentsRoute = AuthedEnvironmentsRouteImport.update({
+  id: '/environments',
+  path: '/environments',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedEditorRoute = AuthedEditorRouteImport.update({
+  id: '/editor',
+  path: '/editor',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedCustomersRoute = AuthedCustomersRouteImport.update({
+  id: '/customers',
+  path: '/customers',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedAppsRoute = AuthedAppsRouteImport.update({
+  id: '/apps',
+  path: '/apps',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const ApiAuthCallbackRoute = ApiAuthCallbackRouteImport.update({
   id: '/api/auth/callback',
   path: '/api/auth/callback',
@@ -43,12 +73,22 @@ const ApiAuthCallbackRoute = ApiAuthCallbackRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/logout': typeof LogoutRoute
+  '/apps': typeof AuthedAppsRoute
+  '/customers': typeof AuthedCustomersRoute
+  '/editor': typeof AuthedEditorRoute
+  '/environments': typeof AuthedEnvironmentsRoute
+  '/locales': typeof AuthedLocalesRoute
   '/tasks': typeof AuthedTasksRoute
   '/api/auth/callback': typeof ApiAuthCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/logout': typeof LogoutRoute
+  '/apps': typeof AuthedAppsRoute
+  '/customers': typeof AuthedCustomersRoute
+  '/editor': typeof AuthedEditorRoute
+  '/environments': typeof AuthedEnvironmentsRoute
+  '/locales': typeof AuthedLocalesRoute
   '/tasks': typeof AuthedTasksRoute
   '/api/auth/callback': typeof ApiAuthCallbackRoute
 }
@@ -57,19 +97,47 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authed': typeof AuthedRouteWithChildren
   '/logout': typeof LogoutRoute
+  '/_authed/apps': typeof AuthedAppsRoute
+  '/_authed/customers': typeof AuthedCustomersRoute
+  '/_authed/editor': typeof AuthedEditorRoute
+  '/_authed/environments': typeof AuthedEnvironmentsRoute
+  '/_authed/locales': typeof AuthedLocalesRoute
   '/_authed/tasks': typeof AuthedTasksRoute
   '/api/auth/callback': typeof ApiAuthCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/logout' | '/tasks' | '/api/auth/callback'
+  fullPaths:
+    | '/'
+    | '/logout'
+    | '/apps'
+    | '/customers'
+    | '/editor'
+    | '/environments'
+    | '/locales'
+    | '/tasks'
+    | '/api/auth/callback'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/logout' | '/tasks' | '/api/auth/callback'
+  to:
+    | '/'
+    | '/logout'
+    | '/apps'
+    | '/customers'
+    | '/editor'
+    | '/environments'
+    | '/locales'
+    | '/tasks'
+    | '/api/auth/callback'
   id:
     | '__root__'
     | '/'
     | '/_authed'
     | '/logout'
+    | '/_authed/apps'
+    | '/_authed/customers'
+    | '/_authed/editor'
+    | '/_authed/environments'
+    | '/_authed/locales'
     | '/_authed/tasks'
     | '/api/auth/callback'
   fileRoutesById: FileRoutesById
@@ -111,6 +179,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedTasksRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/locales': {
+      id: '/_authed/locales'
+      path: '/locales'
+      fullPath: '/locales'
+      preLoaderRoute: typeof AuthedLocalesRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/environments': {
+      id: '/_authed/environments'
+      path: '/environments'
+      fullPath: '/environments'
+      preLoaderRoute: typeof AuthedEnvironmentsRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/editor': {
+      id: '/_authed/editor'
+      path: '/editor'
+      fullPath: '/editor'
+      preLoaderRoute: typeof AuthedEditorRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/customers': {
+      id: '/_authed/customers'
+      path: '/customers'
+      fullPath: '/customers'
+      preLoaderRoute: typeof AuthedCustomersRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/apps': {
+      id: '/_authed/apps'
+      path: '/apps'
+      fullPath: '/apps'
+      preLoaderRoute: typeof AuthedAppsRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/api/auth/callback': {
       id: '/api/auth/callback'
       path: '/api/auth/callback'
@@ -122,10 +225,20 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthedRouteChildren {
+  AuthedAppsRoute: typeof AuthedAppsRoute
+  AuthedCustomersRoute: typeof AuthedCustomersRoute
+  AuthedEditorRoute: typeof AuthedEditorRoute
+  AuthedEnvironmentsRoute: typeof AuthedEnvironmentsRoute
+  AuthedLocalesRoute: typeof AuthedLocalesRoute
   AuthedTasksRoute: typeof AuthedTasksRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
+  AuthedAppsRoute: AuthedAppsRoute,
+  AuthedCustomersRoute: AuthedCustomersRoute,
+  AuthedEditorRoute: AuthedEditorRoute,
+  AuthedEnvironmentsRoute: AuthedEnvironmentsRoute,
+  AuthedLocalesRoute: AuthedLocalesRoute,
   AuthedTasksRoute: AuthedTasksRoute,
 }
 
