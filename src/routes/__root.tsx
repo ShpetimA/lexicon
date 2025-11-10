@@ -1,35 +1,39 @@
 import { QueryClient } from "@tanstack/react-query";
 import {
   createRootRouteWithContext,
-  Link,
   useRouteContext,
 } from "@tanstack/react-router";
+import { AuthKitProvider } from "@workos-inc/authkit-react";
 import { HeadContent, Outlet, Scripts } from "@tanstack/react-router";
-import { ReactNode, useCallback, useMemo } from "react";
-import { ConvexReactClient, ConvexProviderWithAuth } from "convex/react";
+import { ReactNode, useCallback, useRef } from "react";
+import { ConvexReactClient } from "convex/react";
 import { ConvexQueryClient } from "@convex-dev/react-query";
 import appCss from "../styles/app.css?url";
 import type { User } from "@workos-inc/node";
 import { getAuth, getSignInUrl } from "../authkit/serverFunctions";
+import { ConvexProviderWithAuthKit } from "@convex-dev/workos";
 
 function useAuthFromRouter() {
   const context = useRouteContext({ from: "__root__" });
+  const stableAccessToken = useRef<string | null>(null);
 
-  const fetchAccessToken = useCallback(
-    async ({ forceRefreshToken }: { forceRefreshToken: boolean }) => {
-      return context.accessToken ?? null;
-    },
-    [context.accessToken],
-  );
+  if (context.accessToken) {
+    stableAccessToken.current = context.accessToken;
+  }
 
-  return useMemo(
-    () => ({
-      isLoading: false,
-      isAuthenticated: !!context.user,
-      fetchAccessToken,
-    }),
-    [context.user, fetchAccessToken],
-  );
+  const getAccessToken = useCallback(async () => {
+    if (stableAccessToken.current) {
+      return stableAccessToken.current;
+    }
+    return null;
+  }, []);
+
+  return {
+    isLoading: false,
+    isAuthenticated: !!context.user,
+    getAccessToken,
+    user: context.user,
+  };
 }
 
 export const Route = createRootRouteWithContext<{
@@ -59,12 +63,8 @@ export const Route = createRootRouteWithContext<{
     const { user, accessToken } = await getAuth();
     const url = await getSignInUrl();
 
-    if (context.convexClient) {
-      if (accessToken) {
-        context.convexClient.setAuth(() => Promise.resolve(accessToken));
-      } else {
-        context.convexClient.clearAuth();
-      }
+    if (accessToken) {
+      context.convexQueryClient.serverHttpClient?.setAuth(accessToken);
     }
 
     return { user, accessToken, signInUrl: url };
@@ -75,14 +75,22 @@ export const Route = createRootRouteWithContext<{
 });
 
 function Root() {
-  const { convexClient } = useRouteContext({ from: "__root__" });
+  const { convexClient, signInUrl } = useRouteContext({ from: "__root__" });
 
   return (
-    <ConvexProviderWithAuth client={convexClient} useAuth={useAuthFromRouter}>
-      <RootDocument>
-        <Outlet />
-      </RootDocument>
-    </ConvexProviderWithAuth>
+    <AuthKitProvider
+      clientId={import.meta.env.VITE_WORKOS_CLIENT_ID}
+      redirectUri={signInUrl}
+    >
+      <ConvexProviderWithAuthKit
+        client={convexClient}
+        useAuth={useAuthFromRouter}
+      >
+        <RootDocument>
+          <Outlet />
+        </RootDocument>
+      </ConvexProviderWithAuthKit>
+    </AuthKitProvider>
   );
 }
 
