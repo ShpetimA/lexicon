@@ -1,10 +1,6 @@
 import { ChevronsUpDown, LogOut } from "lucide-react";
 import { useNavigate, useRouteContext } from "@tanstack/react-router";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "./ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,11 +15,15 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "./ui/sidebar";
+import { useQuery } from "@tanstack/react-query";
+import { convexQuery } from "@convex-dev/react-query";
+import { api } from "@/convex/_generated/api";
+import { authClient } from "@/src/lib/auth-client";
 
 export function NavUser() {
   const { isMobile } = useSidebar();
-  const { user } = useRouteContext({ from: "__root__" });
   const navigate = useNavigate();
+  const { data: user } = useQuery(convexQuery(api.auth.getCurrentUser, {}));
 
   if (!user) {
     return null;
@@ -31,19 +31,17 @@ export function NavUser() {
 
   const handleLogout = async () => {
     try {
-      navigate({ to: "/logout" });
+      await authClient.signOut();
+      navigate({ to: "/login" });
     } catch (error) {
       console.error("Logout failed:", error);
     }
   };
 
-  const initials = user.firstName && user.lastName
-    ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
-    : user.email[0].toUpperCase();
-
-  const displayName = user.firstName && user.lastName
-    ? `${user.firstName} ${user.lastName}`
-    : user.email;
+  const firstName = user.name?.split(" ")[0] || "";
+  const lastName = user.name?.split(" ")[1] || "";
+  const initials = `${firstName[0]}${lastName[0]}`.toUpperCase();
+  const displayName = `${firstName} ${lastName}`;
 
   return (
     <SidebarMenu>
@@ -55,8 +53,10 @@ export function NavUser() {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={user.profilePictureUrl || ""} alt={displayName} />
-                <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
+                <AvatarImage src={user.image || ""} alt={displayName} />
+                <AvatarFallback className="rounded-lg">
+                  {initials}
+                </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{displayName}</span>
@@ -74,8 +74,10 @@ export function NavUser() {
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.profilePictureUrl || ""} alt={displayName} />
-                  <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
+                  <AvatarImage src={user.image || ""} alt={displayName} />
+                  <AvatarFallback className="rounded-lg">
+                    {initials}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{displayName}</span>

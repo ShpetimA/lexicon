@@ -1,0 +1,8 @@
+{
+  "components": {
+    "betterAuth": {
+      "package": "@convex-dev/better-auth",
+      "version": "^0.9.7"
+    }
+  }
+}

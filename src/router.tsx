@@ -5,6 +5,7 @@ import { routeTree } from "./routeTree.gen";
 import { ConvexQueryClient } from "@convex-dev/react-query";
 import { QueryClient } from "@tanstack/react-query";
 import { routerWithQueryClient } from "@tanstack/react-router-with-query";
+import { ConvexProvider, ConvexReactClient } from "convex/react";
 
 export function getRouter() {
   const CONVEX_URL = (import.meta as any).env.VITE_CONVEX_URL!;
@@ -12,7 +13,10 @@ export function getRouter() {
     throw new Error("VITE_CONVEX_URL is not set");
   }
 
-  const convexQueryClient = new ConvexQueryClient(CONVEX_URL);
+  const convex = new ConvexReactClient(CONVEX_URL, {
+    unsavedChangesWarning: false,
+  });
+  const convexQueryClient = new ConvexQueryClient(convex);
 
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -30,11 +34,14 @@ export function getRouter() {
       defaultPreload: "intent",
       context: {
         queryClient,
-        convexClient: convexQueryClient.convexClient,
+        convexClient: convex,
         convexQueryClient,
       },
       scrollRestoration: true,
       defaultPreloadStaleTime: 0,
+      Wrap: ({ children }) => (
+        <ConvexProvider client={convex}>{children}</ConvexProvider>
+      ),
     }),
     queryClient,
   );

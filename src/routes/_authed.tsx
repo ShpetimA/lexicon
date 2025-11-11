@@ -1,16 +1,13 @@
 import { redirect, createFileRoute, Outlet } from "@tanstack/react-router";
-import { getSignInUrl } from "../authkit/serverFunctions";
 import { Authenticated } from "convex/react";
 import { SidebarProvider, SidebarInset } from "../../components/ui/sidebar";
 import { AppSidebar } from "../../components/AppSidebar";
 import { TenantProvider } from "../contexts/TenantContext";
 
 export const Route = createFileRoute("/_authed")({
-  beforeLoad: async ({ context, location }) => {
+  beforeLoad: async ({ context }) => {
     if (!context.user) {
-      const path = location.pathname;
-      const href = await getSignInUrl({ data: path });
-      throw redirect({ href });
+      throw redirect({ to: "/" });
     }
   },
   component: () => {

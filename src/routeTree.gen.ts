@@ -9,7 +9,8 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as LogoutRouteImport } from './routes/logout'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthedTasksRouteImport } from './routes/_authed/tasks'
@@ -18,11 +19,16 @@ import { Route as AuthedEnvironmentsRouteImport } from './routes/_authed/environ
 import { Route as AuthedEditorRouteImport } from './routes/_authed/editor'
 import { Route as AuthedCustomersRouteImport } from './routes/_authed/customers'
 import { Route as AuthedAppsRouteImport } from './routes/_authed/apps'
-import { Route as ApiAuthCallbackRouteImport } from './routes/api/auth/callback'
+import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
-const LogoutRoute = LogoutRouteImport.update({
-  id: '/logout',
-  path: '/logout',
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthedRoute = AuthedRouteImport.update({
@@ -64,98 +70,112 @@ const AuthedAppsRoute = AuthedAppsRouteImport.update({
   path: '/apps',
   getParentRoute: () => AuthedRoute,
 } as any)
-const ApiAuthCallbackRoute = ApiAuthCallbackRouteImport.update({
-  id: '/api/auth/callback',
-  path: '/api/auth/callback',
+const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
+  id: '/api/auth/$',
+  path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/logout': typeof LogoutRoute
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
   '/apps': typeof AuthedAppsRoute
   '/customers': typeof AuthedCustomersRoute
   '/editor': typeof AuthedEditorRoute
   '/environments': typeof AuthedEnvironmentsRoute
   '/locales': typeof AuthedLocalesRoute
   '/tasks': typeof AuthedTasksRoute
-  '/api/auth/callback': typeof ApiAuthCallbackRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/logout': typeof LogoutRoute
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
   '/apps': typeof AuthedAppsRoute
   '/customers': typeof AuthedCustomersRoute
   '/editor': typeof AuthedEditorRoute
   '/environments': typeof AuthedEnvironmentsRoute
   '/locales': typeof AuthedLocalesRoute
   '/tasks': typeof AuthedTasksRoute
-  '/api/auth/callback': typeof ApiAuthCallbackRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authed': typeof AuthedRouteWithChildren
-  '/logout': typeof LogoutRoute
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
   '/_authed/apps': typeof AuthedAppsRoute
   '/_authed/customers': typeof AuthedCustomersRoute
   '/_authed/editor': typeof AuthedEditorRoute
   '/_authed/environments': typeof AuthedEnvironmentsRoute
   '/_authed/locales': typeof AuthedLocalesRoute
   '/_authed/tasks': typeof AuthedTasksRoute
-  '/api/auth/callback': typeof ApiAuthCallbackRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/logout'
+    | '/login'
+    | '/signup'
     | '/apps'
     | '/customers'
     | '/editor'
     | '/environments'
     | '/locales'
     | '/tasks'
-    | '/api/auth/callback'
+    | '/api/auth/$'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/logout'
+    | '/login'
+    | '/signup'
     | '/apps'
     | '/customers'
     | '/editor'
     | '/environments'
     | '/locales'
     | '/tasks'
-    | '/api/auth/callback'
+    | '/api/auth/$'
   id:
     | '__root__'
     | '/'
     | '/_authed'
-    | '/logout'
+    | '/login'
+    | '/signup'
     | '/_authed/apps'
     | '/_authed/customers'
     | '/_authed/editor'
     | '/_authed/environments'
     | '/_authed/locales'
     | '/_authed/tasks'
-    | '/api/auth/callback'
+    | '/api/auth/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthedRoute: typeof AuthedRouteWithChildren
-  LogoutRoute: typeof LogoutRoute
-  ApiAuthCallbackRoute: typeof ApiAuthCallbackRoute
+  LoginRoute: typeof LoginRoute
+  SignupRoute: typeof SignupRoute
+  ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/logout': {
-      id: '/logout'
-      path: '/logout'
-      fullPath: '/logout'
-      preLoaderRoute: typeof LogoutRouteImport
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authed': {
@@ -214,11 +234,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedAppsRouteImport
       parentRoute: typeof AuthedRoute
     }
-    '/api/auth/callback': {
-      id: '/api/auth/callback'
-      path: '/api/auth/callback'
-      fullPath: '/api/auth/callback'
-      preLoaderRoute: typeof ApiAuthCallbackRouteImport
+    '/api/auth/$': {
+      id: '/api/auth/$'
+      path: '/api/auth/$'
+      fullPath: '/api/auth/$'
+      preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -248,8 +268,9 @@ const AuthedRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthedRoute: AuthedRouteWithChildren,
-  LogoutRoute: LogoutRoute,
-  ApiAuthCallbackRoute: ApiAuthCallbackRoute,
+  LoginRoute: LoginRoute,
+  SignupRoute: SignupRoute,
+  ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
