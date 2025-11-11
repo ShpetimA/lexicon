@@ -15,18 +15,33 @@ import { ConvexProviderWithAuthKit } from "@convex-dev/workos";
 
 function useAuthFromRouter() {
   const context = useRouteContext({ from: "__root__" });
-  const stableAccessToken = useRef<string | null>(null);
-
-  if (context.accessToken) {
-    stableAccessToken.current = context.accessToken;
-  }
+  const lastRefreshRef = useRef<number>(0);
 
   const getAccessToken = useCallback(async () => {
-    if (stableAccessToken.current) {
-      return stableAccessToken.current;
+    const now = Date.now();
+
+    // If we refreshed in the last 5 seconds, use cached token
+    if (context.accessToken && (now - lastRefreshRef.current) < 5000) {
+      return context.accessToken;
     }
-    return null;
-  }, []);
+
+    // Try to refresh the token by calling getAuth (which calls withAuth)
+    // withAuth now automatically validates and refreshes expired tokens
+    try {
+      console.log("Checking/refreshing access token...");
+      const { accessToken } = await getAuth();
+      lastRefreshRef.current = now;
+
+      if (accessToken) {
+        return accessToken;
+      }
+    } catch (error) {
+      console.error("Token refresh failed:", error);
+    }
+
+    // Fallback to context token
+    return context.accessToken || null;
+  }, [context.accessToken]);
 
   return {
     isLoading: false,
@@ -60,14 +75,21 @@ export const Route = createRootRouteWithContext<{
     ],
   }),
   beforeLoad: async ({ context }) => {
-    const { user, accessToken } = await getAuth();
-    const url = await getSignInUrl();
+    try {
+      const { user, accessToken } = await getAuth();
+      const url = await getSignInUrl();
 
-    if (accessToken) {
-      context.convexQueryClient.serverHttpClient?.setAuth(accessToken);
+      if (accessToken) {
+        context.convexQueryClient.serverHttpClient?.setAuth(accessToken);
+      }
+
+      return { user, accessToken, signInUrl: url };
+    } catch (error) {
+      console.error("Auth error in beforeLoad:", error);
+      // If auth fails, redirect to sign in
+      const url = await getSignInUrl();
+      return { user: null, accessToken: undefined, signInUrl: url };
     }
-
-    return { user, accessToken, signInUrl: url };
   },
   errorComponent: () => <div>Error</div>,
   notFoundComponent: () => <div>Not Found</div>,

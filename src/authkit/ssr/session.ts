@@ -78,6 +78,54 @@ export async function withAuth() {
     return { user: null };
   }
 
+  // Validate the access token
+  const isValid = await verifyAccessToken(session.accessToken);
+  
+  // If token is invalid, try to refresh it
+  if (!isValid) {
+    try {
+      const { org_id: organizationId } = decodeJwt<AccessToken>(session.accessToken);
+      
+      const { accessToken, refreshToken, user, impersonator } =
+        await getWorkOS().userManagement.authenticateWithRefreshToken({
+          clientId: getConfig("clientId"),
+          refreshToken: session.refreshToken,
+          organizationId,
+        });
+
+      // Save the refreshed session
+      await saveSession({
+        accessToken,
+        refreshToken,
+        user,
+        impersonator,
+      });
+
+      // Use the new access token
+      const {
+        sid: sessionId,
+        org_id: newOrganizationId,
+        role,
+        permissions,
+        entitlements,
+      } = decodeJwt<AccessToken>(accessToken);
+
+      return {
+        sessionId,
+        user,
+        organizationId: newOrganizationId,
+        role,
+        permissions,
+        entitlements,
+        impersonator,
+        accessToken,
+      };
+    } catch (error) {
+      console.error("Failed to refresh token in withAuth:", error);
+      return { user: null };
+    }
+  }
+
   const {
     sid: sessionId,
     org_id: organizationId,
