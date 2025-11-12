@@ -15,7 +15,6 @@ import type * as environments from "../environments.js";
 import type * as http from "../http.js";
 import type * as keys from "../keys.js";
 import type * as locales from "../locales.js";
-import type * as tasks from "../tasks.js";
 import type * as translations from "../translations.js";
 
 import type {
@@ -32,7 +31,6 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   keys: typeof keys;
   locales: typeof locales;
-  tasks: typeof tasks;
   translations: typeof translations;
 }>;
 
