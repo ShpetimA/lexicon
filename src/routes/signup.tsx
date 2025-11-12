@@ -6,7 +6,6 @@ import {
 } from "@tanstack/react-router";
 import { authClient } from "../lib/auth-client";
 import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
 import {
   Card,
   CardContent,
@@ -15,9 +14,8 @@ import {
   CardHeader,
   CardTitle,
 } from "../../components/ui/card";
-import { Field, FieldError, FieldLabel } from "../../components/ui/field";
 import { z } from "zod";
-import { useForm } from "@tanstack/react-form";
+import { useAppForm } from "@/src/hooks/useAppForm";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/signup")({
@@ -29,29 +27,29 @@ export const Route = createFileRoute("/signup")({
   },
 });
 
-const SignUpSchema = z.object({
-  email: z.email(),
-  password: z.string().min(8),
-  name: z.string(),
+const signUpSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
 function SignUpPage() {
   const navigate = useNavigate();
-  const form = useForm({
+  const form = useAppForm({
     defaultValues: {
+      name: "",
       email: "",
       password: "",
-      name: "",
     },
     validators: {
-      onSubmit: SignUpSchema,
+      onChange: signUpSchema,
     },
-    onSubmit: async (data) => {
+    onSubmit: async ({ value }) => {
       try {
         const result = await authClient.signUp.email({
-          email: data.value.email,
-          name: data.value.name,
-          password: data.value.password,
+          email: value.email,
+          name: value.name,
+          password: value.password,
         });
 
         if (result.error) {
@@ -79,90 +77,45 @@ function SignUpPage() {
           className="space-y-4"
           onSubmit={(e) => {
             e.preventDefault();
-            form.handleSubmit(e);
+            form.handleSubmit();
           }}
         >
           <CardContent className="space-y-4">
-            <form.Field
-              name="name"
-              children={(field) => {
-                const isInvalid =
-                  field.state.meta.isTouched && !field.state.meta.isValid;
-                return (
-                  <Field data-invalid={isInvalid}>
-                    <FieldLabel htmlFor={field.name}>Name</FieldLabel>
-                    <Input
-                      id={field.name}
-                      name={field.name}
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      aria-invalid={isInvalid}
-                      placeholder="John Doe"
-                    />
-                    {isInvalid && (
-                      <FieldError errors={field.state.meta.errors} />
-                    )}
-                  </Field>
-                );
-              }}
-            />
-            <form.Field
-              name="email"
-              children={(field) => {
-                const isInvalid =
-                  field.state.meta.isTouched && !field.state.meta.isValid;
-                return (
-                  <Field data-invalid={isInvalid}>
-                    <FieldLabel htmlFor={field.name}>Email</FieldLabel>
-                    <Input
-                      id={field.name}
-                      name={field.name}
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      aria-invalid={isInvalid}
-                      placeholder="you@example.com"
-                      autoComplete="email"
-                    />
-                    {isInvalid && (
-                      <FieldError errors={field.state.meta.errors} />
-                    )}
-                  </Field>
-                );
-              }}
-            />
-            <form.Field
-              name="password"
-              children={(field) => {
-                const isInvalid =
-                  field.state.meta.isTouched && !field.state.meta.isValid;
-                return (
-                  <Field data-invalid={isInvalid}>
-                    <FieldLabel htmlFor={field.name}>Password</FieldLabel>
-                    <Input
-                      id={field.name}
-                      name={field.name}
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      aria-invalid={isInvalid}
-                      placeholder="••••••••"
-                      autoComplete="new-password"
-                    />
-                    {isInvalid && (
-                      <FieldError errors={field.state.meta.errors} />
-                    )}
-                  </Field>
-                );
-              }}
-            />
+            <form.AppField name="name">
+              {(field) => (
+                <field.TextField label="Name" placeholder="John Doe" required />
+              )}
+            </form.AppField>
+
+            <form.AppField name="email">
+              {(field) => (
+                <field.TextField
+                  label="Email"
+                  type="email"
+                  placeholder="you@example.com"
+                  autoComplete="email"
+                  required
+                />
+              )}
+            </form.AppField>
+
+            <form.AppField name="password">
+              {(field) => (
+                <field.TextField
+                  label="Password"
+                  type="password"
+                  placeholder="••••••••"
+                  autoComplete="new-password"
+                  required
+                />
+              )}
+            </form.AppField>
           </CardContent>
 
           <CardFooter className="flex flex-col gap-4">
-            <Button type="submit" className="w-full">
-              {"Sign Up"}
-            </Button>
+            <form.AppForm>
+              <form.SubmitButton className="w-full">Sign Up</form.SubmitButton>
+            </form.AppForm>
 
             <Button type="button" variant="link" asChild className="text-sm">
               <Link to="/login">Already have an account? Sign in</Link>

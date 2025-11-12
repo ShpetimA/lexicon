@@ -1,10 +1,6 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -12,21 +8,15 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
+import { useEffect } from "react";
+import { useAppForm } from "@/src/hooks/useAppForm";
 
-const UpdateKeySchema = z.object({
+const keySchema = z.object({
   name: z.string().min(1, "Key ID is required"),
-  description: z.string().optional(),
+  description: z.string(),
 });
 
 type Key = {
@@ -48,30 +38,31 @@ export function EditTranslationKeyDialog({
   translationKey,
   onOpenChange,
 }: EditTranslationKeyDialogProps) {
-  const form = useForm({
-    resolver: zodResolver(UpdateKeySchema),
-    values: {
+  const updateKey = useMutation(api.keys.update);
+
+  const form = useAppForm({
+    defaultValues: {
       name: translationKey.name,
       description: translationKey.description || "",
     },
-  });
+    validators: {
+      onChange: keySchema,
+    },
+    onSubmit: async ({ value }) => {
+      try {
+        await updateKey({
+          id: translationKey._id,
+          name: value.name.trim(),
+          description: value.description?.trim() || undefined,
+        });
 
-  const updateKey = useMutation(api.keys.update);
-
-  const handleUpdate = form.handleSubmit(async (data) => {
-    try {
-      await updateKey({
-        id: translationKey._id,
-        name: data.name.trim(),
-        description: data.description?.trim() || undefined,
-      });
-
-      toast.success("Key updated successfully");
-      onOpenChange(false);
-    } catch (error) {
-      toast.error("Failed to update key");
-      console.error("Update key error:", error);
-    }
+        toast.success("Key updated successfully");
+        onOpenChange(false);
+      } catch (error) {
+        toast.error("Failed to update key");
+        console.error("Update key error:", error);
+      }
+    },
   });
 
   return (
@@ -80,56 +71,42 @@ export function EditTranslationKeyDialog({
         <DialogHeader>
           <DialogTitle>Edit Translation Key</DialogTitle>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={handleUpdate} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Key ID</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Enter key ID"
-                      {...field}
-                      disabled={form.formState.isSubmitting}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description (optional)</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Enter description"
-                      rows={3}
-                      {...field}
-                      disabled={form.formState.isSubmitting}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <DialogFooter>
-              <Button variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={form.formState.isSubmitting}
-              >
-                {form.formState.isSubmitting ? "Updating..." : "Update Key"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            form.handleSubmit();
+          }}
+          className="space-y-4"
+        >
+          <form.AppField name="name">
+            {(field) => (
+              <field.TextField
+                label="Key ID"
+                placeholder="Enter key ID"
+                required
+              />
+            )}
+          </form.AppField>
+
+          <form.AppField name="description">
+            {(field) => (
+              <field.TextareaField
+                label="Description (optional)"
+                placeholder="Enter description"
+                rows={3}
+              />
+            )}
+          </form.AppField>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <form.AppForm>
+              <form.SubmitButton loadingText="Updating...">Update Key</form.SubmitButton>
+            </form.AppForm>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

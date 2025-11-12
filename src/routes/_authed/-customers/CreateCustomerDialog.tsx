@@ -1,4 +1,3 @@
-import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "../../../../components/ui/button";
 import {
@@ -9,44 +8,43 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../../../../components/ui/dialog";
-import { Input } from "../../../../components/ui/input";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "../../../../components/ui/form";
 import { useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
+import { z } from "zod";
+import { useAppForm } from "@/src/hooks/useAppForm";
 
 type CreateCustomerDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
 
+const customerSchema = z.object({
+  name: z.string().min(1, "Organization name is required"),
+});
+
 export function CreateCustomerDialog({
   open,
   onOpenChange,
 }: CreateCustomerDialogProps) {
-  const form = useForm({
+  const createCustomer = useMutation(api.customers.create);
+
+  const form = useAppForm({
     defaultValues: {
       name: "",
     },
-  });
-
-  const createCustomer = useMutation(api.customers.create);
-
-  const handleCreate = form.handleSubmit(async (data) => {
-    try {
-      await createCustomer({ name: data.name });
-      toast.success("Customer created successfully");
-      onOpenChange(false);
-      form.reset({ name: "" });
-    } catch {
-      toast.error("Failed to create customer");
-    }
+    validators: {
+      onChange: customerSchema,
+    },
+    onSubmit: async ({ value }) => {
+      try {
+        await createCustomer({ name: value.name });
+        toast.success("Customer created successfully");
+        onOpenChange(false);
+        form.reset();
+      } catch {
+        toast.error("Failed to create customer");
+      }
+    },
   });
 
   return (
@@ -58,36 +56,34 @@ export function CreateCustomerDialog({
             Create a new organization to organize your apps and translations.
           </DialogDescription>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={handleCreate} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Organization Name</FormLabel>
-                  <FormControl>
-                    <Input
-                      id="name"
-                      placeholder="Enter organization name"
-                      {...field}
-                      disabled={form.formState.isSubmitting}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <DialogFooter>
-              <Button variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? "Creating..." : "Create"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            form.handleSubmit();
+          }}
+          className="space-y-4"
+        >
+          <form.AppField name="name">
+            {(field) => (
+              <field.TextField
+                label="Organization Name"
+                placeholder="Enter organization name"
+                required
+              />
+            )}
+          </form.AppField>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <form.AppForm>
+              <form.SubmitButton loadingText="Creating...">
+                Create
+              </form.SubmitButton>
+            </form.AppForm>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

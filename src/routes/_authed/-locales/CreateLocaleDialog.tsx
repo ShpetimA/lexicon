@@ -1,5 +1,3 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -11,21 +9,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useTenant } from "../../../contexts/TenantContext";
 import { useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
+import { useAppForm } from "@/src/hooks/useAppForm";
 
-const CreateLocaleSchema = z.object({
+const localeSchema = z.object({
   code: z.string().min(1, "Locale code is required"),
   isDefault: z.boolean(),
 });
@@ -37,33 +26,34 @@ type CreateLocaleDialogProps = {
 
 export function CreateLocaleDialog({ open, onOpenChange }: CreateLocaleDialogProps) {
   const { selectedApp } = useTenant();
-  const form = useForm({
-    resolver: zodResolver(CreateLocaleSchema),
+  const createLocale = useMutation(api.locales.create);
+
+  const form = useAppForm({
     defaultValues: {
       code: "",
       isDefault: false,
     },
-  });
-
-  const createLocale = useMutation(api.locales.create);
-
-  const handleCreate = form.handleSubmit(async (data) => {
-    if (!selectedApp) {
-      toast.error("No app selected");
-      return;
-    }
-    try {
-      await createLocale({
-        appId: selectedApp._id,
-        code: data.code,
-        isDefault: data.isDefault,
-      });
-      toast.success("Locale created successfully");
-      onOpenChange(false);
-      form.reset({ code: "", isDefault: false });
-    } catch {
-      toast.error("Failed to add locale");
-    }
+    validators: {
+      onChange: localeSchema,
+    },
+    onSubmit: async ({ value }) => {
+      if (!selectedApp) {
+        toast.error("No app selected");
+        return;
+      }
+      try {
+        await createLocale({
+          appId: selectedApp._id,
+          code: value.code,
+          isDefault: value.isDefault,
+        });
+        toast.success("Locale created successfully");
+        onOpenChange(false);
+        form.reset();
+      } catch {
+        toast.error("Failed to add locale");
+      }
+    },
   });
 
   return (
@@ -76,56 +66,38 @@ export function CreateLocaleDialog({ open, onOpenChange }: CreateLocaleDialogPro
             "fr", "en-US").
           </DialogDescription>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={handleCreate} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="code"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Locale Code</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="text"
-                      placeholder="e.g., en, fr, en-US"
-                      {...field}
-                      disabled={form.formState.isSubmitting}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="isDefault"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Set as default locale</FormLabel>
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      disabled={form.formState.isSubmitting}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <DialogFooter>
-              <Button variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
-              </Button>
-              <Button
-                onClick={handleCreate}
-                disabled={form.formState.isSubmitting}
-              >
-                {form.formState.isSubmitting ? "Adding..." : "Add Locale"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            form.handleSubmit();
+          }}
+          className="space-y-4"
+        >
+          <form.AppField name="code">
+            {(field) => (
+              <field.TextField
+                label="Locale Code"
+                placeholder="e.g., en, fr, en-US"
+                required
+              />
+            )}
+          </form.AppField>
+
+          <form.AppField name="isDefault">
+            {(field) => (
+              <field.CheckboxField label="Set as default locale" />
+            )}
+          </form.AppField>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <form.AppForm>
+              <form.SubmitButton loadingText="Adding...">Add Locale</form.SubmitButton>
+            </form.AppForm>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

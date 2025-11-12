@@ -1,5 +1,3 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -11,23 +9,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
+import { useAppForm } from "@/src/hooks/useAppForm";
 
-const UpdateLocaleSchema = z.object({
-  code: z.string().min(1, "Locale code is required").optional(),
-  isDefault: z.boolean().optional(),
+const localeSchema = z.object({
+  code: z.string().min(1, "Locale code is required"),
+  isDefault: z.boolean(),
 });
 
 type Locale = {
@@ -49,29 +38,30 @@ export function UpdateLocaleDialog({
   locale,
   onOpenChange,
 }: UpdateLocaleDialogProps) {
-  const form = useForm({
-    resolver: zodResolver(UpdateLocaleSchema),
-    defaultValues: {
-      code: locale?.code,
-      isDefault: locale?.isDefault,
-    },
-  });
-
   const updateLocale = useMutation(api.locales.update);
 
-  const handleUpdate = form.handleSubmit(async (data) => {
-    if (!locale) return;
-    try {
-      await updateLocale({
-        id: locale._id,
-        code: data.code,
-        isDefault: data.isDefault,
-      });
-      toast.success("Locale updated successfully");
-      onOpenChange(false);
-    } catch {
-      toast.error("Failed to update locale");
-    }
+  const form = useAppForm({
+    defaultValues: {
+      code: locale?.code ?? "",
+      isDefault: locale?.isDefault ?? false,
+    },
+    validators: {
+      onChange: localeSchema,
+    },
+    onSubmit: async ({ value }) => {
+      if (!locale) return;
+      try {
+        await updateLocale({
+          id: locale._id,
+          code: value.code,
+          isDefault: value.isDefault,
+        });
+        toast.success("Locale updated successfully");
+        onOpenChange(false);
+      } catch {
+        toast.error("Failed to update locale");
+      }
+    },
   });
 
   return (
@@ -81,65 +71,42 @@ export function UpdateLocaleDialog({
           <DialogTitle>Edit Locale</DialogTitle>
           <DialogDescription>Update the locale settings.</DialogDescription>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={handleUpdate} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="code"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Locale Code</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="text"
-                      placeholder="e.g., en, fr, en-US"
-                      {...field}
-                        disabled={form.formState.isSubmitting}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="isDefault"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="isDefault"
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      disabled={form.formState.isSubmitting}
-                      />
-                      <FormLabel htmlFor="isDefault">
-                        Set as default locale
-                      </FormLabel>
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <DialogFooter>
-              <Button
-                variant="outline"
-                type="button"
-                onClick={() => onOpenChange(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={form.formState.isSubmitting}
-              >
-                {form.formState.isSubmitting ? "Updating..." : "Update"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            form.handleSubmit();
+          }}
+          className="space-y-4"
+        >
+          <form.AppField name="code">
+            {(field) => (
+              <field.TextField
+                label="Locale Code"
+                placeholder="e.g., en, fr, en-US"
+                required
+              />
+            )}
+          </form.AppField>
+
+          <form.AppField name="isDefault">
+            {(field) => (
+              <field.CheckboxField label="Set as default locale" />
+            )}
+          </form.AppField>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => onOpenChange(false)}
+            >
+              Cancel
+            </Button>
+            <form.AppForm>
+              <form.SubmitButton loadingText="Updating...">Update</form.SubmitButton>
+            </form.AppForm>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );
