@@ -1,14 +1,17 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { userQuery, userMutation } from "./lib/auth";
+import { requireAppAccess } from "./lib/roles";
 import { paginationOptsValidator } from "convex/server";
 
-export const list = query({
+export const list = userQuery({
   args: {
     appId: v.id("apps"),
     paginationOpts: paginationOptsValidator,
     search: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireAppAccess(ctx, args.appId, ["owner", "admin", "member"]);
+
     let keysQuery = ctx.db
       .query("keys")
       .withIndex("by_app", (q) => q.eq("appId", args.appId))
@@ -17,13 +20,13 @@ export const list = query({
     if (args.search) {
       const allKeys = await keysQuery.collect();
       const filtered = allKeys.filter((key) =>
-        key.name.toLowerCase().includes(args.search!.toLowerCase())
+        key.name.toLowerCase().includes(args.search!.toLowerCase()),
       );
-      const startIndex = typeof args.paginationOpts.cursor === 'number' ? args.paginationOpts.cursor : 0;
+      const startIndex = 0;
       const endIndex = startIndex + args.paginationOpts.numItems;
       return {
         page: filtered.slice(startIndex, endIndex),
-        continueCursor: endIndex < filtered.length ? endIndex as number : null,
+        continueCursor: endIndex < filtered.length ? endIndex : null,
         isDone: endIndex >= filtered.length,
       };
     }
@@ -32,20 +35,27 @@ export const list = query({
   },
 });
 
-export const get = query({
+export const get = userQuery({
   args: { id: v.id("keys") },
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.id);
+    const key = await ctx.db.get(args.id);
+    if (!key) return null;
+
+    await requireAppAccess(ctx, key.appId, ["owner", "admin", "member"]);
+
+    return key;
   },
 });
 
-export const create = mutation({
+export const create = userMutation({
   args: {
     appId: v.id("apps"),
     name: v.string(),
     description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireAppAccess(ctx, args.appId, ["owner", "admin"]);
+
     const keyId = await ctx.db.insert("keys", {
       name: args.name,
       description: args.description,
@@ -56,23 +66,32 @@ export const create = mutation({
   },
 });
 
-export const update = mutation({
+export const update = userMutation({
   args: {
     id: v.id("keys"),
     name: v.optional(v.string()),
     description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const key = await ctx.db.get(args.id);
+    if (!key) throw new Error("Key not found");
+
+    await requireAppAccess(ctx, key.appId, ["owner", "admin"]);
+
     const { id, ...updates } = args;
     await ctx.db.patch(id, updates);
     return id;
   },
 });
 
-export const remove = mutation({
+export const remove = userMutation({
   args: { id: v.id("keys") },
   handler: async (ctx, args) => {
-    // Delete all translations for this key first
+    const key = await ctx.db.get(args.id);
+    if (!key) throw new Error("Key not found");
+
+    await requireAppAccess(ctx, key.appId, ["owner", "admin"]);
+
     const translations = await ctx.db
       .query("translations")
       .withIndex("by_key", (q) => q.eq("keyId", args.id))
@@ -82,7 +101,7 @@ export const remove = mutation({
       await ctx.db.delete(translation._id);
     }
 
-    // Delete the key
     await ctx.db.delete(args.id);
+    return args.id;
   },
 });

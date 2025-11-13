@@ -23,7 +23,7 @@ export const Route = createFileRoute("/login")({
   component: LoginPage,
   beforeLoad: async ({ context }) => {
     if (context.user) {
-      throw redirect({ to: "/editor" });
+      throw redirect({ to: "/customers" });
     }
   },
 });

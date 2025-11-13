@@ -38,7 +38,6 @@ export function getRouter() {
         convexQueryClient,
       },
       scrollRestoration: true,
-      defaultPreloadStaleTime: 0,
       Wrap: ({ children }) => (
         <ConvexProvider client={convex}>{children}</ConvexProvider>
       ),

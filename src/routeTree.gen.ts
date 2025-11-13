@@ -13,13 +13,14 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthedTasksRouteImport } from './routes/_authed/tasks'
-import { Route as AuthedLocalesRouteImport } from './routes/_authed/locales'
 import { Route as AuthedEnvironmentsRouteImport } from './routes/_authed/environments'
 import { Route as AuthedEditorRouteImport } from './routes/_authed/editor'
 import { Route as AuthedCustomersRouteImport } from './routes/_authed/customers'
-import { Route as AuthedAppsRouteImport } from './routes/_authed/apps'
+import { Route as AuthedCustomerRouteImport } from './routes/_authed/_customer'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as AuthedCustomerSelectedAppRouteImport } from './routes/_authed/_customer/selectedApp'
+import { Route as AuthedCustomerAppsRouteImport } from './routes/_authed/_customer/apps'
+import { Route as AuthedCustomerSelectedAppLocalesRouteImport } from './routes/_authed/_customer/selectedApp/locales'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -40,16 +41,6 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthedTasksRoute = AuthedTasksRouteImport.update({
-  id: '/tasks',
-  path: '/tasks',
-  getParentRoute: () => AuthedRoute,
-} as any)
-const AuthedLocalesRoute = AuthedLocalesRouteImport.update({
-  id: '/locales',
-  path: '/locales',
-  getParentRoute: () => AuthedRoute,
-} as any)
 const AuthedEnvironmentsRoute = AuthedEnvironmentsRouteImport.update({
   id: '/environments',
   path: '/environments',
@@ -65,9 +56,8 @@ const AuthedCustomersRoute = AuthedCustomersRouteImport.update({
   path: '/customers',
   getParentRoute: () => AuthedRoute,
 } as any)
-const AuthedAppsRoute = AuthedAppsRouteImport.update({
-  id: '/apps',
-  path: '/apps',
+const AuthedCustomerRoute = AuthedCustomerRouteImport.update({
+  id: '/_customer',
   getParentRoute: () => AuthedRoute,
 } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
@@ -75,30 +65,47 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthedCustomerSelectedAppRoute =
+  AuthedCustomerSelectedAppRouteImport.update({
+    id: '/selectedApp',
+    path: '/selectedApp',
+    getParentRoute: () => AuthedCustomerRoute,
+  } as any)
+const AuthedCustomerAppsRoute = AuthedCustomerAppsRouteImport.update({
+  id: '/apps',
+  path: '/apps',
+  getParentRoute: () => AuthedCustomerRoute,
+} as any)
+const AuthedCustomerSelectedAppLocalesRoute =
+  AuthedCustomerSelectedAppLocalesRouteImport.update({
+    id: '/locales',
+    path: '/locales',
+    getParentRoute: () => AuthedCustomerSelectedAppRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
-  '/apps': typeof AuthedAppsRoute
   '/customers': typeof AuthedCustomersRoute
   '/editor': typeof AuthedEditorRoute
   '/environments': typeof AuthedEnvironmentsRoute
-  '/locales': typeof AuthedLocalesRoute
-  '/tasks': typeof AuthedTasksRoute
+  '/apps': typeof AuthedCustomerAppsRoute
+  '/selectedApp': typeof AuthedCustomerSelectedAppRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/selectedApp/locales': typeof AuthedCustomerSelectedAppLocalesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
-  '/apps': typeof AuthedAppsRoute
   '/customers': typeof AuthedCustomersRoute
   '/editor': typeof AuthedEditorRoute
   '/environments': typeof AuthedEnvironmentsRoute
-  '/locales': typeof AuthedLocalesRoute
-  '/tasks': typeof AuthedTasksRoute
+  '/apps': typeof AuthedCustomerAppsRoute
+  '/selectedApp': typeof AuthedCustomerSelectedAppRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/selectedApp/locales': typeof AuthedCustomerSelectedAppLocalesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -106,13 +113,14 @@ export interface FileRoutesById {
   '/_authed': typeof AuthedRouteWithChildren
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
-  '/_authed/apps': typeof AuthedAppsRoute
+  '/_authed/_customer': typeof AuthedCustomerRouteWithChildren
   '/_authed/customers': typeof AuthedCustomersRoute
   '/_authed/editor': typeof AuthedEditorRoute
   '/_authed/environments': typeof AuthedEnvironmentsRoute
-  '/_authed/locales': typeof AuthedLocalesRoute
-  '/_authed/tasks': typeof AuthedTasksRoute
+  '/_authed/_customer/apps': typeof AuthedCustomerAppsRoute
+  '/_authed/_customer/selectedApp': typeof AuthedCustomerSelectedAppRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/_authed/_customer/selectedApp/locales': typeof AuthedCustomerSelectedAppLocalesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -120,38 +128,39 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/signup'
-    | '/apps'
     | '/customers'
     | '/editor'
     | '/environments'
-    | '/locales'
-    | '/tasks'
+    | '/apps'
+    | '/selectedApp'
     | '/api/auth/$'
+    | '/selectedApp/locales'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/login'
     | '/signup'
-    | '/apps'
     | '/customers'
     | '/editor'
     | '/environments'
-    | '/locales'
-    | '/tasks'
+    | '/apps'
+    | '/selectedApp'
     | '/api/auth/$'
+    | '/selectedApp/locales'
   id:
     | '__root__'
     | '/'
     | '/_authed'
     | '/login'
     | '/signup'
-    | '/_authed/apps'
+    | '/_authed/_customer'
     | '/_authed/customers'
     | '/_authed/editor'
     | '/_authed/environments'
-    | '/_authed/locales'
-    | '/_authed/tasks'
+    | '/_authed/_customer/apps'
+    | '/_authed/_customer/selectedApp'
     | '/api/auth/$'
+    | '/_authed/_customer/selectedApp/locales'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -192,20 +201,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authed/tasks': {
-      id: '/_authed/tasks'
-      path: '/tasks'
-      fullPath: '/tasks'
-      preLoaderRoute: typeof AuthedTasksRouteImport
-      parentRoute: typeof AuthedRoute
-    }
-    '/_authed/locales': {
-      id: '/_authed/locales'
-      path: '/locales'
-      fullPath: '/locales'
-      preLoaderRoute: typeof AuthedLocalesRouteImport
-      parentRoute: typeof AuthedRoute
-    }
     '/_authed/environments': {
       id: '/_authed/environments'
       path: '/environments'
@@ -227,11 +222,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedCustomersRouteImport
       parentRoute: typeof AuthedRoute
     }
-    '/_authed/apps': {
-      id: '/_authed/apps'
-      path: '/apps'
-      fullPath: '/apps'
-      preLoaderRoute: typeof AuthedAppsRouteImport
+    '/_authed/_customer': {
+      id: '/_authed/_customer'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof AuthedCustomerRouteImport
       parentRoute: typeof AuthedRoute
     }
     '/api/auth/$': {
@@ -241,25 +236,71 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authed/_customer/selectedApp': {
+      id: '/_authed/_customer/selectedApp'
+      path: '/selectedApp'
+      fullPath: '/selectedApp'
+      preLoaderRoute: typeof AuthedCustomerSelectedAppRouteImport
+      parentRoute: typeof AuthedCustomerRoute
+    }
+    '/_authed/_customer/apps': {
+      id: '/_authed/_customer/apps'
+      path: '/apps'
+      fullPath: '/apps'
+      preLoaderRoute: typeof AuthedCustomerAppsRouteImport
+      parentRoute: typeof AuthedCustomerRoute
+    }
+    '/_authed/_customer/selectedApp/locales': {
+      id: '/_authed/_customer/selectedApp/locales'
+      path: '/locales'
+      fullPath: '/selectedApp/locales'
+      preLoaderRoute: typeof AuthedCustomerSelectedAppLocalesRouteImport
+      parentRoute: typeof AuthedCustomerSelectedAppRoute
+    }
   }
 }
 
+interface AuthedCustomerSelectedAppRouteChildren {
+  AuthedCustomerSelectedAppLocalesRoute: typeof AuthedCustomerSelectedAppLocalesRoute
+}
+
+const AuthedCustomerSelectedAppRouteChildren: AuthedCustomerSelectedAppRouteChildren =
+  {
+    AuthedCustomerSelectedAppLocalesRoute:
+      AuthedCustomerSelectedAppLocalesRoute,
+  }
+
+const AuthedCustomerSelectedAppRouteWithChildren =
+  AuthedCustomerSelectedAppRoute._addFileChildren(
+    AuthedCustomerSelectedAppRouteChildren,
+  )
+
+interface AuthedCustomerRouteChildren {
+  AuthedCustomerAppsRoute: typeof AuthedCustomerAppsRoute
+  AuthedCustomerSelectedAppRoute: typeof AuthedCustomerSelectedAppRouteWithChildren
+}
+
+const AuthedCustomerRouteChildren: AuthedCustomerRouteChildren = {
+  AuthedCustomerAppsRoute: AuthedCustomerAppsRoute,
+  AuthedCustomerSelectedAppRoute: AuthedCustomerSelectedAppRouteWithChildren,
+}
+
+const AuthedCustomerRouteWithChildren = AuthedCustomerRoute._addFileChildren(
+  AuthedCustomerRouteChildren,
+)
+
 interface AuthedRouteChildren {
-  AuthedAppsRoute: typeof AuthedAppsRoute
+  AuthedCustomerRoute: typeof AuthedCustomerRouteWithChildren
   AuthedCustomersRoute: typeof AuthedCustomersRoute
   AuthedEditorRoute: typeof AuthedEditorRoute
   AuthedEnvironmentsRoute: typeof AuthedEnvironmentsRoute
-  AuthedLocalesRoute: typeof AuthedLocalesRoute
-  AuthedTasksRoute: typeof AuthedTasksRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
-  AuthedAppsRoute: AuthedAppsRoute,
+  AuthedCustomerRoute: AuthedCustomerRouteWithChildren,
   AuthedCustomersRoute: AuthedCustomersRoute,
   AuthedEditorRoute: AuthedEditorRoute,
   AuthedEnvironmentsRoute: AuthedEnvironmentsRoute,
-  AuthedLocalesRoute: AuthedLocalesRoute,
-  AuthedTasksRoute: AuthedTasksRoute,
 }
 
 const AuthedRouteWithChildren =

@@ -10,7 +10,7 @@ export default defineSchema({
   customerUsers: defineTable({
     customerId: v.id("customers"),
     userId: v.id("users"),
-    role: v.string(),
+    role: v.union(v.literal("owner"), v.literal("admin"), v.literal("member")),
     createdAt: v.number(),
   })
     .index("by_customer", ["customerId"])
@@ -29,9 +29,12 @@ export default defineSchema({
   users: defineTable({
     email: v.string(),
     name: v.optional(v.string()),
-    hashedPassword: v.string(),
+    hashedPassword: v.string(), // Kept for backward compatibility, empty for Better-Auth users
+    betterAuthUserId: v.optional(v.string()), // Link to Better-Auth user table
     createdAt: v.number(),
-  }).index("by_email", ["email"]),
+  })
+    .index("by_email", ["email"])
+    .index("by_betterauth_id", ["betterAuthUserId"]),
 
   locales: defineTable({
     code: v.string(),

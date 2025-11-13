@@ -1,14 +1,13 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Authenticated } from "convex/react";
-import { Button } from "../../../components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "../../../components/ui/card";
+} from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -16,8 +15,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../../../components/ui/table";
-import { Badge } from "../../../components/ui/badge";
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { useTenant } from "../../contexts/TenantContext";
 import { Plus, Edit, Trash2, Server } from "lucide-react";
 import { CreateEnvironmentDialog } from "./-environments/CreateEnvironmentDialog";
@@ -25,8 +24,8 @@ import { UpdateEnvironmentDialog } from "./-environments/UpdateEnvironmentDialog
 import { DeleteEnvironmentDialog } from "./-environments/DeleteEnvironmentDialog";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
-import { api } from "../../../convex/_generated/api";
-import { Id } from "../../../convex/_generated/dataModel";
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
 
 export const Route = createFileRoute("/_authed/environments")({
   component: RouteComponent,
@@ -34,10 +33,8 @@ export const Route = createFileRoute("/_authed/environments")({
 
 function RouteComponent() {
   return (
-    <div className="container mx-auto py-8">
-      <Authenticated>
-        <EnvironmentsPage />
-      </Authenticated>
+    <div className="container px-4 mx-auto py-8">
+      <EnvironmentsPage />
     </div>
   );
 }

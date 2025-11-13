@@ -10,12 +10,16 @@
 
 import type * as apps from "../apps.js";
 import type * as auth from "../auth.js";
+import type * as customerUsers from "../customerUsers.js";
 import type * as customers from "../customers.js";
 import type * as environments from "../environments.js";
 import type * as http from "../http.js";
 import type * as keys from "../keys.js";
+import type * as lib_auth from "../lib/auth.js";
+import type * as lib_roles from "../lib/roles.js";
 import type * as locales from "../locales.js";
 import type * as translations from "../translations.js";
+import type * as users from "../users.js";
 
 import type {
   ApiFromModules,
@@ -26,12 +30,16 @@ import type {
 declare const fullApi: ApiFromModules<{
   apps: typeof apps;
   auth: typeof auth;
+  customerUsers: typeof customerUsers;
   customers: typeof customers;
   environments: typeof environments;
   http: typeof http;
   keys: typeof keys;
+  "lib/auth": typeof lib_auth;
+  "lib/roles": typeof lib_roles;
   locales: typeof locales;
   translations: typeof translations;
+  users: typeof users;
 }>;
 
 /**

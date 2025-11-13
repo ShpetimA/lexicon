@@ -40,27 +40,21 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
     const items = [
       {
         title: "Locales",
-        url: selectedApp
-          ? `/locales`
-          : "#",
+        url: selectedApp ? `/selectedApp/locales` : "#",
         icon: Globe,
         disabled: !selectedApp,
         disabledTooltip: "Select an app first",
       },
       {
         title: "Environments",
-        url: selectedApp
-          ? `/environments`
-          : "#",
+        url: selectedApp ? `/environments` : "#",
         icon: Server,
         disabled: !selectedApp,
         disabledTooltip: "Select an app first",
       },
       {
         title: "Editor",
-        url: selectedApp
-          ? `/editor`
-          : "#",
+        url: selectedApp ? `/editor` : "#",
         icon: Edit3,
         disabled: !selectedApp,
         disabledTooltip: "Select an app first",

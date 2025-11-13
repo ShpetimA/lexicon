@@ -1,116 +1,48 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
-import { Authenticated, useQuery, useMutation } from "convex/react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { TranslationKeyList } from "./-editor/TranslationKeyList";
 import { AddKeyForm } from "./-editor/AddKeyForm";
-import { TranslationActionsMenu } from "./-editor/TranslationActionsMenu";
 import { useTenant } from "@/src/contexts/TenantContext";
 import { toast } from "sonner";
 import { Plus, Search } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
-
-// Simple debounce hook
-function useDebouncedValue<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-
-  return debouncedValue;
-}
+import useDebouncedValue from "@/src/hooks/use-debounce";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 
 type TranslationStatus = "idle" | "pending" | "success" | "error";
 
-type Key = {
-  _id: Id<"keys">;
-  name: string;
-  description?: string;
-  appId: Id<"apps">;
-  createdAt: number;
-};
-
-type Locale = {
-  _id: Id<"locales">;
-  code: string;
-  isDefault: boolean;
-  appId: Id<"apps">;
-  createdAt: number;
-};
-
-type Translation = {
-  _id: Id<"translations">;
-  value: string;
-  keyId: Id<"keys">;
-  localeId: Id<"locales">;
-  updatedBy: Id<"users">;
-  updatedAt: number;
-};
-
-type TranslationEditorItem = {
-  key: Key;
-  translations: Translation[];
-};
-
-type TranslationEditorResponse = {
-  data: Record<string, TranslationEditorItem>;
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-};
 export const Route = createFileRoute("/_authed/editor")({
-  component: RouteComponent,
+  component: TranslationEditorPage,
 });
-
-function RouteComponent() {
-  return (
-    <Authenticated>
-      <TranslationEditorPage />
-    </Authenticated>
-  );
-}
 
 function TranslationEditorPage() {
   const [isAddingKey, setIsAddingKey] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebouncedValue(searchTerm, 300);
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedLocales, setSelectedLocales] = useState<string[]>([]);
   const [translationStatuses, setTranslationStatuses] = useState<
     Record<string, TranslationStatus>
   >({});
   const { selectedApp } = useTenant();
 
-  const locales = useQuery(
-    api.locales.list,
-    selectedApp ? { appId: selectedApp._id } : "skip",
-  ) as Locale[] | undefined;
+  const { data: locales } = useQuery(
+    convexQuery(api.locales.list, { appId: selectedApp?._id ?? ("" as any) }),
+  );
 
-  const editorData = useQuery(
-    api.translations.getEditorData,
-    selectedApp
-      ? {
-          appId: selectedApp._id,
-          page: currentPage,
-          limit: 10,
-          search: debouncedSearchTerm || undefined,
-        }
-      : "skip",
-  ) as TranslationEditorResponse | undefined;
+  const { data: editorData } = useQuery(
+    convexQuery(api.translations.getEditorData, {
+      appId: selectedApp?._id ?? ("" as any),
+      page: currentPage,
+      limit: 10,
+      search: debouncedSearchTerm || undefined,
+    }),
+  );
 
-  const upsertTranslation = useMutation(api.translations.upsert);
+  const upsertTranslation = useConvexMutation(api.translations.upsert);
 
   const handleUpdateTranslation = async (
     keyName: string,
@@ -137,17 +69,15 @@ function TranslationEditorPage() {
         value,
       });
 
+      setTranslationStatuses((prev) => ({ ...prev, [statusKey]: "success" }));
       setTimeout(() => {
-        setTranslationStatuses((prev) => ({ ...prev, [statusKey]: "success" }));
-        setTimeout(() => {
-          setTranslationStatuses((prev) => ({ ...prev, [statusKey]: "idle" }));
-        }, 2000);
+        setTranslationStatuses((prev) => ({ ...prev, [statusKey]: "idle" }));
       }, 600);
     } catch {
       setTranslationStatuses((prev) => ({ ...prev, [statusKey]: "error" }));
       setTimeout(() => {
         setTranslationStatuses((prev) => ({ ...prev, [statusKey]: "idle" }));
-      }, 3000);
+      }, 600);
     }
   };
 
@@ -155,13 +85,8 @@ function TranslationEditorPage() {
     ? Object.values(editorData.data).map((item) => item.key)
     : [];
 
-  const filteredLocales =
-    selectedLocales.length > 0
-      ? locales?.filter((locale) => selectedLocales.includes(locale._id)) || []
-      : locales || [];
-
   return (
-    <Authenticated>
+    <>
       <div className="flex flex-col h-dvh">
         <div className="h-dvh overflow-hidden">
           <div className="border-b bg-muted/50 p-4 flex flex-col gap-4 justify-between">
@@ -211,7 +136,7 @@ function TranslationEditorPage() {
               locales={locales || []}
               editorData={editorData}
               translationStatuses={translationStatuses}
-              filteredLocales={filteredLocales}
+              filteredLocales={locales || []}
               onUpdateTranslation={handleUpdateTranslation}
               searchTerm={searchTerm}
               onAddKey={() => setIsAddingKey(true)}
@@ -247,6 +172,6 @@ function TranslationEditorPage() {
           </div>
         )}
       </div>
-    </Authenticated>
+    </>
   );
 }

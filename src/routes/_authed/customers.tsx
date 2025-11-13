@@ -1,35 +1,25 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Authenticated } from "convex/react";
-import { Button } from "../../../components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "../../../components/ui/card";
+} from "@/components/ui/card";
 import { Plus, Building2, Calendar, Trash2 } from "lucide-react";
 import { CreateCustomerDialog } from "./-customers/CreateCustomerDialog";
 import { DeleteCustomerDialog } from "./-customers/DeleteCustomerDialog";
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { api } from "../../../convex/_generated/api";
-import { Id } from "../../../convex/_generated/dataModel";
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
 
 export const Route = createFileRoute("/_authed/customers")({
-  component: RouteComponent,
+  component: CustomersPage,
 });
 
-function RouteComponent() {
-  return (
-    <div className="container mx-auto py-8">
-      <Authenticated>
-        <CustomersPage />
-      </Authenticated>
-    </div>
-  );
-}
 
 function CustomersPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -40,7 +30,7 @@ function CustomersPage() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto py-8 px-4 space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Organizations</h1>
@@ -84,7 +74,9 @@ function CustomersPage() {
                     <CardDescription className="flex items-center gap-2 mt-1">
                       <Calendar className="h-4 w-4" />
                       Created{" "}
-                      {new Date(customer.createdAt).toLocaleDateString()}
+                      {customer.createdAt
+                        ? new Date(customer.createdAt).toLocaleDateString()
+                        : "Unknown"}
                     </CardDescription>
                   </div>
                   <Button
@@ -92,7 +84,7 @@ function CustomersPage() {
                     type="button"
                     size="sm"
                     onClick={() => {
-                      setDeleteCustomerId(customer._id);
+                      setDeleteCustomerId(customer._id ?? null);
                     }}
                   >
                     <Trash2 className="h-4 w-4 text-destructive" />

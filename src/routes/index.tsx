@@ -5,7 +5,7 @@ export const Route = createFileRoute("/")({
     if (!context.user) {
       throw redirect({ to: "/login" });
     } else {
-      throw redirect({ to: "/editor" });
+      throw redirect({ to: "/customers" });
     }
   },
 });

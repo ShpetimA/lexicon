@@ -1,13 +1,13 @@
-import { useState } from "react";
+import { use, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Button } from "../../../components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "../../../components/ui/card";
+} from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -15,7 +15,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../../../components/ui/table";
+} from "@/components/ui/table";
 import {
   Smartphone,
   Plus,
@@ -26,27 +26,17 @@ import {
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { CreateAppDialog } from "./-apps/CreateAppDialog";
-import { DeleteAppDialog } from "./-apps/DeleteAppDialog";
-import { Authenticated } from "convex/react";
+import { CreateAppDialog } from "../-apps/CreateAppDialog";
+import { DeleteAppDialog } from "../-apps/DeleteAppDialog";
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { api } from "../../../convex/_generated/api";
-import { Id } from "../../../convex/_generated/dataModel";
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
+import { useCustomer } from "@/src/routes/_authed/_customer";
 
-export const Route = createFileRoute("/_authed/apps")({
-  component: RouteComponent,
+export const Route = createFileRoute("/_authed/_customer/apps")({
+  component: AppsPage,
 });
-
-function RouteComponent() {
-  return (
-    <div className="container mx-auto py-8">
-      <Authenticated>
-        <AppsPage />
-      </Authenticated>
-    </div>
-  );
-}
 
 function AppsPage() {
   const navigate = useNavigate();
@@ -54,7 +44,8 @@ function AppsPage() {
   const [deleteAppId, setDeleteAppId] = useState<Id<"apps"> | null>(null);
   const [visibleApiKeys, setVisibleApiKeys] = useState<Set<string>>(new Set());
 
-  const customerId = "jn79j7mv1wgwdq4w8cehk7n4817v37m7" as Id<"customers">;
+  const { selectedCustomer } = useCustomer();
+  const customerId = selectedCustomer._id;
 
   const { data: apps } = useSuspenseQuery(
     convexQuery(api.apps.list, { customerId }),
@@ -80,7 +71,7 @@ function AppsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto py-8 px-4 space-y-6">
       <div className="flex items-center gap-4">
         <div className="flex-1">
           <h1 className="text-3xl font-bold">Apps</h1>

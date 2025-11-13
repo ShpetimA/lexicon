@@ -1,14 +1,13 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Authenticated } from "convex/react";
-import { Button } from "../../../components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "../../../components/ui/card";
+} from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -16,28 +15,27 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../../../components/ui/table";
-import { Badge } from "../../../components/ui/badge";
-import { useTenant } from "../../contexts/TenantContext";
-import { Plus, Edit, Trash2, Globe } from "lucide-react";
-import { CreateLocaleDialog } from "./-locales/CreateLocaleDialog";
-import { UpdateLocaleDialog } from "./-locales/UpdateLocaleDialog";
-import { DeleteLocaleDialog } from "./-locales/DeleteLocaleDialog";
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Edit, Trash2 } from "lucide-react";
+import { CreateLocaleDialog } from "../../-locales/CreateLocaleDialog";
+import { UpdateLocaleDialog } from "../../-locales/UpdateLocaleDialog";
+import { DeleteLocaleDialog } from "../../-locales/DeleteLocaleDialog";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
-import { api } from "../../../convex/_generated/api";
-import { Id } from "../../../convex/_generated/dataModel";
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
+import { useApp } from "@/src/routes/_authed/_customer/selectedApp";
+import { useCustomer } from "@/src/routes/_authed/_customer";
 
-export const Route = createFileRoute("/_authed/locales")({
+export const Route = createFileRoute("/_authed/_customer/selectedApp/locales")({
   component: RouteComponent,
 });
 
 function RouteComponent() {
   return (
-    <div className="container mx-auto py-8">
-      <Authenticated>
-        <LocalesPage />
-      </Authenticated>
+    <div className="container px-4 mx-auto py-8">
+      <LocalesPage />
     </div>
   );
 }
@@ -56,32 +54,15 @@ function LocalesPage() {
   const [deleteLocaleId, setDeleteLocaleId] = useState<Id<"locales"> | null>(
     null,
   );
-
-  const { selectedCustomer, selectedApp } = useTenant();
+  const { selectedCustomer } = useCustomer();
+  const { selectedApp } = useApp();
 
   const { data: locales, isLoading } = useQuery({
     ...convexQuery(api.locales.list, {
-      appId: selectedApp?._id ?? ("" as any),
+      appId: selectedApp._id,
     }),
     enabled: !!selectedApp,
   });
-
-  if (!selectedCustomer || !selectedApp) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <Globe className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">
-            Select Organization and App
-          </h3>
-          <p className="text-muted-foreground">
-            Please select an organization and app from the sidebar to manage
-            locales.
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   if (isLoading) {
     return (

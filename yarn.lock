@@ -2252,7 +2252,12 @@
   dependencies:
     ws "^8.18.3"
 
-"@tanstack/devtools-event-client@^0.3.2", "@tanstack/devtools-event-client@^0.3.3", "@tanstack/devtools-event-client@^0.3.4":
+"@tanstack/devtools-event-client@^0.3.2", "@tanstack/devtools-event-client@^0.3.3":
+  version "0.3.5"
+  resolved "https://registry.yarnpkg.com/@tanstack/devtools-event-client/-/devtools-event-client-0.3.5.tgz#0e1d0a047529d15abfd788a481677cd2593c2dd9"
+  integrity sha512-RL1f5ZlfZMpghrCIdzl6mLOFLTuhqmPNblZgBaeKfdtk5rfbjykurv+VfYydOFXj0vxVIoA2d/zT7xfD7Ph8fw==
+
+"@tanstack/devtools-event-client@^0.3.4":
   version "0.3.4"
   resolved "https://registry.yarnpkg.com/@tanstack/devtools-event-client/-/devtools-event-client-0.3.4.tgz#4915e6dfb7070d15dc1f9d2997af59420373a061"
   integrity sha512-eq+PpuutUyubXu+ycC1GIiVwBs86NF/8yYJJAKSpPcJLWl6R/761F1H4F/9ziX6zKezltFUH1ah3Cz8Ah+KJrw==
@@ -3123,7 +3128,7 @@ convert-source-map@^2.0.0:
   resolved "https://registry.yarnpkg.com/convert-source-map/-/convert-source-map-2.0.0.tgz#4b560f649fc4e918dd0ab75cf4961e8bc882d82a"
   integrity sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg==
 
-convex-helpers@^0.1.85, convex-helpers@^0.1.95:
+convex-helpers@^0.1.104, convex-helpers@^0.1.85, convex-helpers@^0.1.95:
   version "0.1.104"
   resolved "https://registry.yarnpkg.com/convex-helpers/-/convex-helpers-0.1.104.tgz#09f349ed366eec1cf010bb73443570e3c05e4781"
   integrity sha512-7CYvx7T3K6n+McDTK4ZQaQNNGBzq5aWezpjzsKbOxPXx7oNcTP9wrpef3JxeXWFzkByJv5hRCjseh9B7eNJ7Ig==
@@ -3343,9 +3348,9 @@ detect-node-es@^1.1.0:
   integrity sha512-ypdmJU/TbBby2Dxibuv7ZLW3Bs1QEmM7nHjEANfohJLvE0XVujisn1qPJcZxg+qDucsr+bP6fLD1rPS3AhJ7EQ==
 
 devalue@^5.3.2:
-  version "5.4.2"
-  resolved "https://registry.yarnpkg.com/devalue/-/devalue-5.4.2.tgz#d002d836f9e92fc0c3bd9b76ea69129cbf99dca7"
-  integrity sha512-MwPZTKEPK2k8Qgfmqrd48ZKVvzSQjgW0lXLxiIBA8dQjtf/6mw6pggHNLcyDKyf+fI6eXxlQwPsfaCMTU5U+Bw==
+  version "5.5.0"
+  resolved "https://registry.yarnpkg.com/devalue/-/devalue-5.5.0.tgz#2b7d3959496773dfc6d83dbc909af3ddb65ba6bb"
+  integrity sha512-69sM5yrHfFLJt0AZ9QqZXGCPfJ7fQjvpln3Rq5+PS03LD32Ost1Q9N+eEnaQwGRIriKkMImXD56ocjQmfjbV3w==
 
 diff@^8.0.2:
   version "8.0.2"
@@ -4852,11 +4857,6 @@ react-dom@^19.2.0:
   integrity sha512-UlbRu4cAiGaIewkPyiRGJk0imDN2T3JjieT6spoL2UeSf5od4n5LB/mQ4ejmxhCFT1tYe8IvaFulzynWovsEFQ==
   dependencies:
     scheduler "^0.27.0"
-
-react-hook-form@^7.66.0:
-  version "7.66.0"
-  resolved "https://registry.yarnpkg.com/react-hook-form/-/react-hook-form-7.66.0.tgz#1a09ea9d0ebb3bdda5073b08a486538d37d9c0d4"
-  integrity sha512-xXBqsWGKrY46ZqaHDo+ZUYiMUgi8suYu5kdrS20EG8KiL7VRQitEbNjm+UcrDYrNi1YLyfpmAeGjCZYXLT9YBw==
 
 react-is@^16.13.1:
   version "16.13.1"

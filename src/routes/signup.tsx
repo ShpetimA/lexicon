@@ -17,24 +17,28 @@ import {
 import { z } from "zod";
 import { useAppForm } from "@/src/hooks/useAppForm";
 import { toast } from "sonner";
+import { useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
 
 export const Route = createFileRoute("/signup")({
   component: SignUpPage,
   beforeLoad: async ({ context }) => {
     if (context.user) {
-      throw redirect({ to: "/editor" });
+      throw redirect({ to: "/customers" });
     }
   },
 });
 
 const signUpSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  email: z.string().email("Invalid email address"),
+  email: z.email("Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
 function SignUpPage() {
   const navigate = useNavigate();
+  const syncUser = useMutation(api.users.syncUser);
+
   const form = useAppForm({
     defaultValues: {
       name: "",
@@ -46,18 +50,24 @@ function SignUpPage() {
     },
     onSubmit: async ({ value }) => {
       try {
-        const result = await authClient.signUp.email({
+        const { data, error } = await authClient.signUp.email({
           email: value.email,
           name: value.name,
           password: value.password,
         });
 
-        if (result.error) {
-          toast.error(result.error.message || "Sign up failed");
+        if (error) {
+          toast.error(error.message || "Sign up failed");
           return;
         }
 
-        navigate({ to: "/editor" });
+        await syncUser({
+          betterAuthUserId: data.user.id,
+          email: data.user.email,
+          name: data.user.name,
+        });
+
+        navigate({ to: "/customers" });
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "An error occurred");
       }
