@@ -6,7 +6,7 @@ import { TenantProvider } from "../contexts/TenantContext";
 
 export const Route = createFileRoute("/_authed")({
   beforeLoad: async ({ context }) => {
-    if (!context.user) {
+    if (!context.userId) {
       throw redirect({ to: "/" });
     }
   },

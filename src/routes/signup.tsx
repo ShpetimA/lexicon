@@ -23,7 +23,7 @@ import { api } from "../../convex/_generated/api";
 export const Route = createFileRoute("/signup")({
   component: SignUpPage,
   beforeLoad: async ({ context }) => {
-    if (context.user) {
+    if (context.userId) {
       throw redirect({ to: "/customers" });
     }
   },

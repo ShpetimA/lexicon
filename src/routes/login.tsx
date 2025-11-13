@@ -22,7 +22,7 @@ import { useAppForm } from "@/src/hooks/useAppForm";
 export const Route = createFileRoute("/login")({
   component: LoginPage,
   beforeLoad: async ({ context }) => {
-    if (context.user) {
+    if (context.userId) {
       throw redirect({ to: "/customers" });
     }
   },
