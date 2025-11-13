@@ -1,5 +1,5 @@
 import { ChevronsUpDown, LogOut } from "lucide-react";
-import { useNavigate, useRouteContext } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import {
   DropdownMenu,
@@ -38,10 +38,8 @@ export function NavUser() {
     }
   };
 
-  const firstName = user.name?.split(" ")[0] || "";
-  const lastName = user.name?.split(" ")[1] || "";
-  const initials = `${firstName[0]}${lastName[0]}`.toUpperCase();
-  const displayName = `${firstName} ${lastName}`;
+  const initials = `${user.name[0]}${user.name[1]}`.toUpperCase();
+  const displayName = user.name;
 
   return (
     <SidebarMenu>
