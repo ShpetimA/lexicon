@@ -1,7 +1,7 @@
 import { LocaleTranslationRow } from "./LocaleTranslationRow";
 import { TranslationKeyActions } from "./TranslationKeyActions";
 import { AutoTranslateButton } from "./AutoTranslateButton";
-import type { Id } from "@/convex/_generated/dataModel";
+import type { Doc, Id } from "@/convex/_generated/dataModel";
 
 type TranslationStatus = "idle" | "pending" | "success" | "error";
 
@@ -33,7 +33,10 @@ type Translation = {
 interface TranslationKeyCardProps {
   translationKey: Key;
   locales: Locale[];
-  translations: Translation[];
+  translations: {
+    key: Doc<"keys">;
+    translations: Doc<"translations">[];
+  };
   translationStatuses: Record<string, TranslationStatus>;
   keyName: string;
   onUpdateTranslation: (localeId: string, value: string) => void;
@@ -57,8 +60,8 @@ export function TranslationKeyCard({
       <div className="flex sticky top-0 items-center gap-3 bg-muted px-4 py-3">
         <span className="font-mono text-sm flex-1">{translationKey.name}</span>
         <AutoTranslateButton
-          keyId={translationKey.name}
-          translations={translations}
+          keyId={translationKey._id}
+          translations={translations.translations}
           locales={locales}
         />
         <TranslationKeyActions translationKey={translationKey} />
@@ -66,8 +69,8 @@ export function TranslationKeyCard({
 
       <div className="bg-background">
         {displayLocales.map((locale) => {
-          const translation = translations.find(
-            (t) => t.localeId === locale._id
+          const translation = translations.translations.find(
+            (t) => t.localeId === locale._id,
           );
           const statusKey = `${keyName}-${locale._id}`;
           const status = translationStatuses[statusKey] || "idle";

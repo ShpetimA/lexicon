@@ -20,6 +20,11 @@ export const Route = createFileRoute("/_authed/editor")({
 });
 
 function TranslationEditorPage() {
+  const { selectedApp } = useTenant();
+  if (!selectedApp) {
+    return <div>No app selected</div>;
+  }
+
   const [isAddingKey, setIsAddingKey] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebouncedValue(searchTerm, 300);
@@ -27,15 +32,14 @@ function TranslationEditorPage() {
   const [translationStatuses, setTranslationStatuses] = useState<
     Record<string, TranslationStatus>
   >({});
-  const { selectedApp } = useTenant();
 
   const { data: locales } = useQuery(
-    convexQuery(api.locales.list, { appId: selectedApp?._id ?? ("" as any) }),
+    convexQuery(api.locales.list, { appId: selectedApp._id }),
   );
 
   const { data: editorData } = useQuery(
     convexQuery(api.translations.getEditorData, {
-      appId: selectedApp?._id ?? ("" as any),
+      appId: selectedApp._id,
       page: currentPage,
       limit: 10,
       search: debouncedSearchTerm || undefined,

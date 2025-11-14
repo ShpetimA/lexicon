@@ -1,17 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { TranslationKeyCard } from "./TranslationKeyCard";
 import { Search, Plus } from "lucide-react";
-import type { Id } from "@/convex/_generated/dataModel";
+import type { Doc, Id } from "@/convex/_generated/dataModel";
 
 type TranslationStatus = "idle" | "pending" | "success" | "error";
-
-type Key = {
-  _id: Id<"keys">;
-  name: string;
-  description?: string;
-  appId: Id<"apps">;
-  createdAt: number;
-};
 
 type Locale = {
   _id: Id<"locales">;
@@ -21,18 +13,9 @@ type Locale = {
   createdAt: number;
 };
 
-type Translation = {
-  _id: Id<"translations">;
-  value: string;
-  keyId: Id<"keys">;
-  localeId: Id<"locales">;
-  updatedBy: Id<"users">;
-  updatedAt: number;
-};
-
 type TranslationEditorItem = {
-  key: Key;
-  translations: Translation[];
+  key: Doc<"keys">;
+  translations: Doc<"translations">[];
 };
 
 type TranslationEditorResponse = {
@@ -46,12 +29,16 @@ type TranslationEditorResponse = {
 };
 
 type TranslationKeyListProps = {
-  keys: Key[];
+  keys: Doc<"keys">[];
   locales: Locale[];
   editorData: TranslationEditorResponse;
   translationStatuses: Record<string, TranslationStatus>;
   filteredLocales: Locale[];
-  onUpdateTranslation: (keyName: string, localeId: string, value: string) => void;
+  onUpdateTranslation: (
+    keyName: string,
+    localeId: string,
+    value: string,
+  ) => void;
   searchTerm: string;
   onAddKey: () => void;
 };
@@ -98,7 +85,7 @@ export function TranslationKeyList({
               key={key.name}
               translationKey={key}
               locales={locales || []}
-              translations={keyData.translations}
+              translations={keyData}
               translationStatuses={translationStatuses}
               keyName={key.name}
               filteredLocales={filteredLocales}

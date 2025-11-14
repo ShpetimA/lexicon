@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Copy, Check, X, Loader2 } from "lucide-react";
-import type { Id } from "@/convex/_generated/dataModel";
+import type { Doc, Id } from "@/convex/_generated/dataModel";
 
 type TranslationStatus = "idle" | "pending" | "success" | "error";
 
@@ -14,18 +14,9 @@ type Locale = {
   createdAt: number;
 };
 
-type Translation = {
-  _id: Id<"translations">;
-  value: string;
-  keyId: Id<"keys">;
-  localeId: Id<"locales">;
-  updatedBy: Id<"users">;
-  updatedAt: number;
-};
-
 interface LocaleTranslationRowProps {
   locale: Locale;
-  translation?: Translation;
+  translation?: Doc<"translations">;
   status: TranslationStatus;
   onSave: (localeId: string, value: string) => void;
 }
@@ -83,20 +74,6 @@ export function LocaleTranslationRow({
     return names[code] || code;
   };
 
-  const renderStatusIndicator = () => {
-    if (status === "idle") return null;
-
-    return (
-      <div className="flex items-center justify-center w-6 h-6 rounded">
-        {status === "pending" && (
-          <Loader2 className="h-4 w-4 text-blue-500 animate-spin" />
-        )}
-        {status === "success" && <Check className="h-4 w-4 text-green-500" />}
-        {status === "error" && <X className="h-4 w-4 text-red-500" />}
-      </div>
-    );
-  };
-
   return (
     <div className="flex items-start border-t hover:bg-muted/30 transition-colors group">
       <div className="w-[200px] px-6 py-3 text-right text-sm text-muted-foreground border-r">
@@ -126,11 +103,25 @@ export function LocaleTranslationRow({
         )}
       </div>
       <div className="w-[40px] px-2 pt-2 flex items-start justify-center">
-        {renderStatusIndicator()}
+        <StatusIndicator status={status} />
       </div>
       <div className="w-[60px] px-4 pt-3 text-right text-xs text-muted-foreground font-mono">
         {value.length}
       </div>
+    </div>
+  );
+}
+
+function StatusIndicator({ status }: { status: TranslationStatus }) {
+  if (status === "idle") return null;
+
+  return (
+    <div className="flex items-center justify-center w-6 h-6 rounded">
+      {status === "pending" && (
+        <Loader2 className="h-4 w-4 text-blue-500 animate-spin" />
+      )}
+      {status === "success" && <Check className="h-4 w-4 text-green-500" />}
+      {status === "error" && <X className="h-4 w-4 text-red-500" />}
     </div>
   );
 }

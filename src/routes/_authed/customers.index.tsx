@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -16,7 +16,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 
-export const Route = createFileRoute("/_authed/customers")({
+export const Route = createFileRoute("/_authed/customers/")({
   component: CustomersPage,
 });
 
@@ -65,34 +65,49 @@ function CustomersPage() {
         </Card>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {customers.map((customer) => (
-            <Card key={customer._id}>
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="text-lg">{customer.name}</CardTitle>
-                    <CardDescription className="flex items-center gap-2 mt-1">
-                      <Calendar className="h-4 w-4" />
-                      Created{" "}
-                      {customer.createdAt
-                        ? new Date(customer.createdAt).toLocaleDateString()
-                        : "Unknown"}
-                    </CardDescription>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    type="button"
-                    size="sm"
-                    onClick={() => {
-                      setDeleteCustomerId(customer._id ?? null);
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                </div>
-              </CardHeader>
-            </Card>
-          ))}
+          {customers.map((customer) => {
+            if (!customer._id) return null;
+            return (
+              <Card
+                key={customer._id}
+                className="cursor-pointer hover:shadow-lg transition-shadow"
+              >
+                <Link
+                  to="/customers/$customerId"
+                  params={{ customerId: customer._id }}
+                >
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle className="text-lg">
+                          {customer.name}
+                        </CardTitle>
+                        <CardDescription className="flex items-center gap-2 mt-1">
+                          <Calendar className="h-4 w-4" />
+                          Created{" "}
+                          {customer.createdAt
+                            ? new Date(customer.createdAt).toLocaleDateString()
+                            : "Unknown"}
+                        </CardDescription>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        type="button"
+                        size="sm"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setDeleteCustomerId(customer._id ?? null);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </CardHeader>
+                </Link>
+              </Card>
+            );
+          })}
         </div>
       )}
 
