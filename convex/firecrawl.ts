@@ -23,15 +23,7 @@ const schemaJson = {
   required: ["translations"],
 };
 
-const extractionPrompt = `
-Extract all text content from this web page for translation purposes. Include:
-- All visible or hidden page text, headings, and body content
-- Button labels and link text
-- Navigation menu items
-- Form labels and placeholders
-- Alt text from images
-Ensure each text item is complete and preserves the original context. Do not translate - only extract and organize for translation.
-`;
+const extractionPrompt = `Extract all text content from this web page for translation purposes. Do not translate - only extract and organize for translation.`;
 
 const schemaTranslations = z.object({
   translations: z

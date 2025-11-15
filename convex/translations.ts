@@ -380,7 +380,8 @@ export const bulkAutoTranslate = action({
       args.targetLocaleIds.includes(l._id),
     );
 
-    const results: Array<{ keyName: string; locale: string; success: boolean; error?: string; requiresReview?: boolean }> = [];
+    // Collect all translation tasks to run in parallel
+    const translationTasks: Array<() => Promise<{ keyName: string; locale: string; success: boolean; error?: string; requiresReview?: boolean }>> = [];
 
     for (const key of keys) {
       const translations = await ctx.runQuery(api.translations.list, {
@@ -392,13 +393,14 @@ export const bulkAutoTranslate = action({
       );
 
       if (!sourceTranslation?.value) {
+        // Add all target locales as failed results
         for (const targetLocale of targetLocales) {
-          results.push({
+          translationTasks.push(async () => ({
             keyName: key.name,
             locale: targetLocale.code,
             success: false,
             error: "No source translation",
-          });
+          }));
         }
         continue;
       }
@@ -414,71 +416,77 @@ export const bulkAutoTranslate = action({
           continue;
         }
 
-        try {
-          const systemContent = args.instructions
-            ? `Translate the following text to ${targetLocale.code}. Follow these instructions: ${args.instructions}. Return only the translated text without any explanation or additional context.`
-            : `Translate the following text to ${targetLocale.code}. Return only the translated text without any explanation or additional context.`;
+        // Create async task for this translation
+        translationTasks.push(async () => {
+          try {
+            const systemContent = args.instructions
+              ? `Translate the following text to ${targetLocale.code}. Follow these instructions: ${args.instructions}. Return only the translated text without any explanation or additional context.`
+              : `Translate the following text to ${targetLocale.code}. Return only the translated text without any explanation or additional context.`;
 
-          const result = await generateObject({
-            model: openai("gpt-4o"),
-            schema: z.object({
-              translation: z.string(),
-            }),
-            messages: [
-              {
-                role: "system",
-                content: systemContent,
-              },
-              {
-                role: "user",
-                content: sourceText,
-              },
-            ],
-          });
-
-          // Check if locale requires review
-          const requiresReview = targetLocale.requiresReview || false;
-
-          if (requiresReview && args.updatedBy) {
-            // Submit for review
-            await ctx.runMutation(api.translations.submitForReview, {
-              keyId: key._id,
-              localeId: targetLocale._id,
-              value: result.object.translation,
-              updatedBy: args.updatedBy,
+            const result = await generateObject({
+              model: openai("gpt-4o"),
+              schema: z.object({
+                translation: z.string(),
+              }),
+              messages: [
+                {
+                  role: "system",
+                  content: systemContent,
+                },
+                {
+                  role: "user",
+                  content: sourceText,
+                },
+              ],
             });
-            results.push({
+
+            // Check if locale requires review
+            const requiresReview = targetLocale.requiresReview || false;
+
+            if (requiresReview && args.updatedBy) {
+              // Submit for review
+              await ctx.runMutation(api.translations.submitForReview, {
+                keyId: key._id,
+                localeId: targetLocale._id,
+                value: result.object.translation,
+                updatedBy: args.updatedBy,
+              });
+              return {
+                keyName: key.name,
+                locale: targetLocale.code,
+                success: true,
+                requiresReview: true,
+              };
+            } else {
+              // Direct save
+              await ctx.runMutation(api.translations.upsert, {
+                keyId: key._id,
+                localeId: targetLocale._id,
+                value: result.object.translation,
+                updatedBy: args.updatedBy,
+              });
+              return {
+                keyName: key.name,
+                locale: targetLocale.code,
+                success: true,
+                requiresReview: false,
+              };
+            }
+          } catch (error) {
+            console.error(error);
+            return {
               keyName: key.name,
               locale: targetLocale.code,
-              success: true,
-              requiresReview: true,
-            });
-          } else {
-            // Direct save
-            await ctx.runMutation(api.translations.upsert, {
-              keyId: key._id,
-              localeId: targetLocale._id,
-              value: result.object.translation,
-              updatedBy: args.updatedBy,
-            });
-            results.push({
-              keyName: key.name,
-              locale: targetLocale.code,
-              success: true,
-              requiresReview: false,
-            });
+              success: false,
+              error: error instanceof Error ? error.message : "Unknown error",
+            };
           }
-        } catch (error) {
-          console.error(error);
-          results.push({
-            keyName: key.name,
-            locale: targetLocale.code,
-            success: false,
-            error: error instanceof Error ? error.message : "Unknown error",
-          });
-        }
+        });
       }
     }
+
+    // Execute all tasks in parallel
+    const results = await Promise.all(translationTasks.map(task => task()));
 
     return results;
   },
