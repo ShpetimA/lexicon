@@ -21,6 +21,8 @@ import type * as keys from "../keys.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_roles from "../lib/roles.js";
 import type * as locales from "../locales.js";
+import type * as migrate from "../migrate.js";
+import type * as seedLocales from "../seedLocales.js";
 import type * as translations from "../translations.js";
 import type * as users from "../users.js";
 
@@ -44,6 +46,8 @@ declare const fullApi: ApiFromModules<{
   "lib/auth": typeof lib_auth;
   "lib/roles": typeof lib_roles;
   locales: typeof locales;
+  migrate: typeof migrate;
+  seedLocales: typeof seedLocales;
   translations: typeof translations;
   users: typeof users;
 }>;

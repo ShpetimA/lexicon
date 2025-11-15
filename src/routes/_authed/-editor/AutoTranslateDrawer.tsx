@@ -40,11 +40,13 @@ import {
 import { Input } from "@/components/ui/input";
 
 type Locale = {
-  _id: Id<"locales">;
+  _id: Id<"globalLocales">;
   code: string;
+  name: string;
+  nativeName: string;
   isDefault: boolean;
-  appId: Id<"apps">;
-  createdAt: number;
+  appLocaleId: Id<"appLocales">;
+  addedAt: number;
 };
 
 interface AutoTranslateDrawerProps {
@@ -76,11 +78,11 @@ export function AutoTranslateDrawer({
     convexQuery(api.users.getCurrentUserRecord, {})
   );
   const [step, setStep] = useState<TranslationStep>("source");
-  const [sourceLocaleId, setSourceLocaleId] = useState<Id<"locales"> | null>(
+  const [sourceLocaleId, setSourceLocaleId] = useState<Id<"globalLocales"> | null>(
     () => locales.find((l) => l.isDefault)?._id ?? null
   );
   const [sourceText, setSourceText] = useState("");
-  const [targetLocaleIds, setTargetLocaleIds] = useState<Set<Id<"locales">>>(
+  const [targetLocaleIds, setTargetLocaleIds] = useState<Set<Id<"globalLocales">>>(
     new Set()
   );
   const [instructions, setInstructions] = useState("");
@@ -96,7 +98,7 @@ export function AutoTranslateDrawer({
   const upsertTranslationMutation = useConvexMutation(api.translations.upsert);
   const templates = useConvexQuery(api.instructionTemplates.list, { appId }) ?? [];
 
-  const hasTranslation = (localeId: Id<"locales">) => {
+  const hasTranslation = (localeId: Id<"globalLocales">) => {
     return translations.some((t) => t.localeId === localeId && t.value);
   };
 
@@ -176,7 +178,7 @@ export function AutoTranslateDrawer({
     }
   };
 
-  const handleToggleTarget = (localeId: Id<"locales">) => {
+  const handleToggleTarget = (localeId: Id<"globalLocales">) => {
     const newSet = new Set(targetLocaleIds);
     if (newSet.has(localeId)) {
       newSet.delete(localeId);
@@ -292,7 +294,7 @@ export function AutoTranslateDrawer({
             <RadioGroup
               value={sourceLocaleId ?? undefined}
               onValueChange={(value) =>
-                setSourceLocaleId(value as Id<"locales">)
+                setSourceLocaleId(value as Id<"globalLocales">)
               }
             >
               {locales.map((locale) => (

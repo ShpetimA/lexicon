@@ -15,16 +15,16 @@ import type { Id } from "../../../../convex/_generated/dataModel";
 import { useAppForm } from "@/src/hooks/useAppForm";
 
 const localeSchema = z.object({
-  code: z.string().min(1, "Locale code is required"),
   isDefault: z.boolean(),
 });
 
 type Locale = {
-  _id: Id<"locales">;
+  _id: Id<"globalLocales">;
   code: string;
+  name: string;
+  nativeName: string;
   isDefault: boolean;
-  appId: Id<"apps">;
-  createdAt: number;
+  appLocaleId: Id<"appLocales">;
 };
 
 type UpdateLocaleDialogProps = {
@@ -42,7 +42,6 @@ export function UpdateLocaleDialog({
 
   const form = useAppForm({
     defaultValues: {
-      code: locale?.code ?? "",
       isDefault: locale?.isDefault ?? false,
     },
     validators: {
@@ -52,8 +51,7 @@ export function UpdateLocaleDialog({
       if (!locale) return;
       try {
         await updateLocale({
-          id: locale._id,
-          code: value.code,
+          appLocaleId: locale.appLocaleId,
           isDefault: value.isDefault,
         });
         toast.success("Locale updated successfully");
@@ -69,7 +67,9 @@ export function UpdateLocaleDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit Locale</DialogTitle>
-          <DialogDescription>Update the locale settings.</DialogDescription>
+          <DialogDescription>
+            Update settings for {locale?.name} ({locale?.code})
+          </DialogDescription>
         </DialogHeader>
         <form
           onSubmit={(e) => {
@@ -78,15 +78,12 @@ export function UpdateLocaleDialog({
           }}
           className="space-y-4"
         >
-          <form.AppField name="code">
-            {(field) => (
-              <field.TextField
-                label="Locale Code"
-                placeholder="e.g., en, fr, en-US"
-                required
-              />
-            )}
-          </form.AppField>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Locale</label>
+            <div className="text-sm text-muted-foreground">
+              {locale?.name} ({locale?.code}) - {locale?.nativeName}
+            </div>
+          </div>
 
           <form.AppField name="isDefault">
             {(field) => (

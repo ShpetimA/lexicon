@@ -14,18 +14,20 @@ type Key = {
 };
 
 type Locale = {
-  _id: Id<"locales">;
+  _id: Id<"globalLocales">;
   code: string;
+  name: string;
+  nativeName: string;
   isDefault: boolean;
-  appId: Id<"apps">;
-  createdAt: number;
+  appLocaleId: Id<"appLocales">;
+  addedAt: number;
 };
 
 type Translation = {
   _id: Id<"translations">;
   value: string;
   keyId: Id<"keys">;
-  localeId: Id<"locales">;
+  localeId: Id<"globalLocales">;
   updatedBy: Id<"users">;
   updatedAt: number;
 };

@@ -36,11 +36,13 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 export type BulkActionType = "translateAll" | "fillMissing" | "copyLocale";
 
 type Locale = {
-  _id: Id<"locales">;
+  _id: Id<"globalLocales">;
   code: string;
+  name: string;
+  nativeName: string;
   isDefault: boolean;
-  appId: Id<"apps">;
-  createdAt: number;
+  appLocaleId: Id<"appLocales">;
+  addedAt: number;
 };
 
 interface BulkActionsDrawerProps {
@@ -80,14 +82,14 @@ export function BulkActionsDrawer({
   const [actionType, setActionType] = useState<BulkActionType | null>(
     initialAction,
   );
-  const [sourceLocaleId, setSourceLocaleId] = useState<Id<"locales"> | null>(
+  const [sourceLocaleId, setSourceLocaleId] = useState<Id<"globalLocales"> | null>(
     () => locales.find((l) => l.isDefault)?._id ?? null,
   );
-  const [targetLocaleIds, setTargetLocaleIds] = useState<Set<Id<"locales">>>(
+  const [targetLocaleIds, setTargetLocaleIds] = useState<Set<Id<"globalLocales">>>(
     new Set(),
   );
   const [copyTargetLocaleId, setCopyTargetLocaleId] =
-    useState<Id<"locales"> | null>(null);
+    useState<Id<"globalLocales"> | null>(null);
   const [instructions, setInstructions] = useState("");
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -206,7 +208,7 @@ export function BulkActionsDrawer({
     }
   };
 
-  const handleToggleTarget = (localeId: Id<"locales">) => {
+  const handleToggleTarget = (localeId: Id<"globalLocales">) => {
     const newSet = new Set(targetLocaleIds);
     if (newSet.has(localeId)) {
       newSet.delete(localeId);
@@ -407,7 +409,7 @@ export function BulkActionsDrawer({
             <RadioGroup
               value={sourceLocaleId ?? undefined}
               onValueChange={(value) =>
-                setSourceLocaleId(value as Id<"locales">)
+                setSourceLocaleId(value as Id<"globalLocales">)
               }
             >
               {locales.map((locale) => (
@@ -435,7 +437,7 @@ export function BulkActionsDrawer({
             <RadioGroup
               value={copyTargetLocaleId ?? undefined}
               onValueChange={(value) =>
-                setCopyTargetLocaleId(value as Id<"locales">)
+                setCopyTargetLocaleId(value as Id<"globalLocales">)
               }
             >
               {locales

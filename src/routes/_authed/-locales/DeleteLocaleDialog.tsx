@@ -15,7 +15,7 @@ import { useState } from "react";
 
 type DeleteLocaleDialogProps = {
   open: boolean;
-  localeId: Id<"locales"> | null;
+  localeId: Id<"appLocales"> | null;
   onOpenChange: (open: boolean) => void;
 };
 
@@ -27,11 +27,11 @@ export function DeleteLocaleDialog({ open, localeId, onOpenChange }: DeleteLocal
     if (!localeId) return;
     setIsDeleting(true);
     try {
-      await deleteLocale({ id: localeId });
-      toast.success("Locale deleted successfully");
+      await deleteLocale({ appLocaleId: localeId });
+      toast.success("Locale removed successfully");
       onOpenChange(false);
     } catch {
-      toast.error("Failed to delete locale");
+      toast.error("Failed to remove locale");
     } finally {
       setIsDeleting(false);
     }

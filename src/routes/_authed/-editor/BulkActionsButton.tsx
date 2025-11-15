@@ -11,11 +11,13 @@ import { useState } from "react";
 import { BulkActionsDrawer, type BulkActionType } from "./BulkActionsDrawer";
 
 type Locale = {
-  _id: Id<"locales">;
+  _id: Id<"globalLocales">;
   code: string;
+  name: string;
+  nativeName: string;
   isDefault: boolean;
-  appId: Id<"apps">;
-  createdAt: number;
+  appLocaleId: Id<"appLocales">;
+  addedAt: number;
 };
 
 interface BulkActionsButtonProps {

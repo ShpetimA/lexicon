@@ -36,14 +36,22 @@ export default defineSchema({
     .index("by_email", ["email"])
     .index("by_betterauth_id", ["betterAuthUserId"]),
 
-  locales: defineTable({
+  globalLocales: defineTable({
     code: v.string(),
-    isDefault: v.boolean(),
-    appId: v.id("apps"),
+    name: v.string(),
+    nativeName: v.string(),
     createdAt: v.number(),
+  }).index("by_code", ["code"]),
+
+  appLocales: defineTable({
+    appId: v.id("apps"),
+    localeId: v.id("globalLocales"),
+    isDefault: v.boolean(),
+    addedAt: v.number(),
   })
     .index("by_app", ["appId"])
-    .index("by_code_app", ["code", "appId"]),
+    .index("by_locale", ["localeId"])
+    .index("by_app_locale", ["appId", "localeId"]),
 
   keys: defineTable({
     name: v.string(),
@@ -59,7 +67,7 @@ export default defineSchema({
     updatedBy: v.optional(v.id("users")),
     updatedAt: v.number(),
     keyId: v.id("keys"),
-    localeId: v.id("locales"),
+    localeId: v.id("globalLocales"),
   })
     .index("by_key", ["keyId"])
     .index("by_locale", ["localeId"])

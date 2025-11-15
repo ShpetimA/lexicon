@@ -35,9 +35,9 @@ interface ScrapeWebsiteSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   appId: Id<"apps">;
-  locales: Array<{ _id: Id<"locales">; code: string; isDefault: boolean }>;
+  locales: Array<{ _id: Id<"globalLocales">; code: string; isDefault: boolean }>;
   onComplete: (
-    localeId: Id<"locales">,
+    localeId: Id<"globalLocales">,
     translations: Array<{ keyName: string; value: string }>,
   ) => void;
 }
@@ -56,7 +56,7 @@ export function ScrapeWebsiteSheet({
   const [scrapedUrl, setScrapedUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [scrapedData, setScrapedData] = useState<ScrapedTranslation[]>([]);
-  const [selectedLocaleId, setSelectedLocaleId] = useState<Id<"locales"> | "">(
+  const [selectedLocaleId, setSelectedLocaleId] = useState<Id<"globalLocales"> | "">(
     "",
   );
 
@@ -219,7 +219,7 @@ export function ScrapeWebsiteSheet({
                 <Select
                   value={selectedLocaleId}
                   onValueChange={(value) =>
-                    setSelectedLocaleId(value as Id<"locales">)
+                    setSelectedLocaleId(value as Id<"globalLocales">)
                   }
                 >
                   <SelectTrigger>

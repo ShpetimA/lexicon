@@ -100,7 +100,7 @@ export const get = query({
 export const create = mutation({
   args: {
     keyId: v.id("keys"),
-    localeId: v.id("locales"),
+    localeId: v.id("globalLocales"),
     value: v.string(),
     updatedBy: v.id("users"),
   },
@@ -119,7 +119,7 @@ export const create = mutation({
 export const update = mutation({
   args: {
     keyId: v.id("keys"),
-    localeId: v.id("locales"),
+    localeId: v.id("globalLocales"),
     value: v.string(),
     updatedBy: v.id("users"),
   },
@@ -147,7 +147,7 @@ export const update = mutation({
 export const upsert = mutation({
   args: {
     keyId: v.id("keys"),
-    localeId: v.id("locales"),
+    localeId: v.id("globalLocales"),
     value: v.string(),
     updatedBy: v.optional(v.id("users")),
   },
@@ -189,7 +189,7 @@ export const remove = mutation({
 export const createBatchWithTranslations = mutation({
   args: {
     appId: v.id("apps"),
-    localeId: v.id("locales"),
+    localeId: v.id("globalLocales"),
     translations: v.array(
       v.object({
         keyName: v.string(),
@@ -245,8 +245,8 @@ export const createBatchWithTranslations = mutation({
 export const autoTranslate = action({
   args: {
     keyId: v.id("keys"),
-    sourceLocaleId: v.id("locales"),
-    targetLocaleIds: v.array(v.id("locales")),
+    sourceLocaleId: v.id("globalLocales"),
+    targetLocaleIds: v.array(v.id("globalLocales")),
     instructions: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -334,8 +334,8 @@ export const autoTranslate = action({
 export const bulkAutoTranslate = action({
   args: {
     appId: v.id("apps"),
-    sourceLocaleId: v.id("locales"),
-    targetLocaleIds: v.array(v.id("locales")),
+    sourceLocaleId: v.id("globalLocales"),
+    targetLocaleIds: v.array(v.id("globalLocales")),
     actionType: v.union(
       v.literal("translateAll"),
       v.literal("fillMissing"),
@@ -452,8 +452,8 @@ export const bulkAutoTranslate = action({
 export const copyLocale = mutation({
   args: {
     appId: v.id("apps"),
-    sourceLocaleId: v.id("locales"),
-    targetLocaleId: v.id("locales"),
+    sourceLocaleId: v.id("globalLocales"),
+    targetLocaleId: v.id("globalLocales"),
   },
   handler: async (ctx, args) => {
     const keys = await ctx.db

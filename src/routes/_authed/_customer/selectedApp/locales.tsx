@@ -41,17 +41,19 @@ function RouteComponent() {
 }
 
 type Locale = {
-  _id: Id<"locales">;
+  _id: Id<"globalLocales">;
   code: string;
+  name: string;
+  nativeName: string;
   isDefault: boolean;
-  appId: Id<"apps">;
-  createdAt: number;
+  appLocaleId: Id<"appLocales">;
+  addedAt: number;
 };
 
 function LocalesPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingLocale, setEditingLocale] = useState<Locale | null>(null);
-  const [deleteLocaleId, setDeleteLocaleId] = useState<Id<"locales"> | null>(
+  const [deleteLocaleId, setDeleteLocaleId] = useState<Id<"appLocales"> | null>(
     null,
   );
   const { selectedCustomer } = useCustomer();
@@ -103,16 +105,20 @@ function LocalesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Name</TableHead>
                   <TableHead>Code</TableHead>
+                  <TableHead>Native Name</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Created</TableHead>
+                  <TableHead>Added</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {locales.map((locale) => (
-                  <TableRow key={locale._id}>
-                    <TableCell className="font-medium">{locale.code}</TableCell>
+                  <TableRow key={locale.appLocaleId}>
+                    <TableCell className="font-medium">{locale.name}</TableCell>
+                    <TableCell>{locale.code}</TableCell>
+                    <TableCell>{locale.nativeName}</TableCell>
                     <TableCell>
                       {locale.isDefault ? (
                         <Badge variant="default">Default</Badge>
@@ -121,7 +127,7 @@ function LocalesPage() {
                       )}
                     </TableCell>
                     <TableCell>
-                      {new Date(locale.createdAt).toLocaleDateString()}
+                      {new Date(locale.addedAt).toLocaleDateString()}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-2">
@@ -135,7 +141,7 @@ function LocalesPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => setDeleteLocaleId(locale._id)}
+                          onClick={() => setDeleteLocaleId(locale.appLocaleId)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

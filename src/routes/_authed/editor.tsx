@@ -56,7 +56,7 @@ function TranslationEditorPage() {
   );
 
   const handleScrapedData = async (
-    localeId: Id<"locales">,
+    localeId: Id<"globalLocales">,
     translations: Array<{ keyName: string; value: string }>
   ) => {
     try {
@@ -95,7 +95,7 @@ function TranslationEditorPage() {
     try {
       await upsertTranslation({
         keyId: keyData.key._id,
-        localeId: localeId as Id<"locales">,
+        localeId: localeId as Id<"globalLocales">,
         value,
       });
 
