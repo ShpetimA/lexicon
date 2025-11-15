@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Copy, Check, X, Loader2 } from "lucide-react";
-import { PendingReviewDetail } from "./PendingReviewDetail";
+import { PendingReviewStack } from "./PendingReviewStack";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { api } from "@/convex/_generated/api";
@@ -25,7 +25,7 @@ interface LocaleTranslationRowProps {
   translation?: Doc<"translations">;
   status: TranslationStatus;
   onSave: (localeId: string, value: string) => Promise<{ requiresReview: boolean }>;
-  review?: any;
+  reviews?: any[];
   currentUserId?: Id<"users">;
 }
 
@@ -34,7 +34,7 @@ export function LocaleTranslationRow({
   translation,
   status,
   onSave,
-  review,
+  reviews,
   currentUserId,
 }: LocaleTranslationRowProps) {
   const [value, setValue] = useState(translation?.value || "");
@@ -65,15 +65,12 @@ export function LocaleTranslationRow({
     setValue(translation?.value || "");
   }, [translation?.value]);
 
-  const handleBlur = async () => {
-    if (value !== (translation?.value || "")) {
-      const result = await onSave(locale._id, value);
-      // Clear field if submitted for review
-      if (result.requiresReview) {
-        setValue("");
-      }
-    }
-  };
+   const handleBlur = async () => {
+     if (value !== (translation?.value || "")) {
+       await onSave(locale._id, value);
+       // Don't clear field - let user keep editing while reviews are pending
+     }
+   };
 
   const handleCopy = () => {
     navigator.clipboard.writeText(value);
@@ -98,6 +95,10 @@ export function LocaleTranslationRow({
       setReviewLoading(true);
       await approveReview({ reviewId, reviewedBy: currentUserId! });
       toast.success("Review approved");
+      // Only clear field if this was the last pending review
+      if (reviews?.length === 1) {
+        setValue("");
+      }
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Failed to approve review",
@@ -171,9 +172,9 @@ export function LocaleTranslationRow({
            {value.length}
          </div>
        </div>
-       {review && (
-         <PendingReviewDetail
-           review={review}
+       {reviews && reviews.length > 0 && (
+         <PendingReviewStack
+           reviews={reviews}
            currentUserId={currentUserId}
            onApprove={handleApprove}
            onReject={handleReject}

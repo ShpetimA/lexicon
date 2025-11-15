@@ -152,14 +152,15 @@ function TranslationEditorPage() {
      ? Object.values(editorData.data).map((item) => item.key)
      : [];
 
-   // Create review map for easy lookup: keyId-localeId -> review
+   // Create review map for easy lookup: keyId-localeId -> array of reviews (for stacking)
    const reviewMap = pendingReviews?.reduce(
      (acc, review) => {
        const key = `${review.keyId}-${review.localeId}`;
-       acc[key] = review;
+       if (!acc[key]) acc[key] = [];
+       acc[key].push(review);
        return acc;
      },
-     {} as Record<string, (typeof pendingReviews)[0]>,
+     {} as Record<string, typeof pendingReviews>,
    ) ?? {};
 
    return (

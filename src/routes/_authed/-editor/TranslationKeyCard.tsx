@@ -85,7 +85,7 @@ export function TranslationKeyCard({
           const status = translationStatuses[statusKey] || "idle";
 
            const reviewKey = `${translationKey._id}-${locale._id}`;
-           const review = reviewMap?.[reviewKey];
+           const reviews = reviewMap?.[reviewKey];
 
            return (
              <LocaleTranslationRow
@@ -94,7 +94,7 @@ export function TranslationKeyCard({
                translation={translation}
                status={status}
                onSave={onUpdateTranslation}
-               review={review}
+               reviews={reviews}
                currentUserId={currentUserId}
              />
            );

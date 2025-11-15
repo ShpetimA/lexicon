@@ -553,25 +553,7 @@ export const submitForReview = mutation({
       )
       .first();
 
-    // Check for existing pending review for this key/locale
-    const existingReview = await ctx.db
-      .query("translationReviews")
-      .withIndex("by_key_locale", (q) =>
-        q.eq("keyId", args.keyId).eq("localeId", args.localeId),
-      )
-      .filter((q) => q.eq(q.field("status"), "pending"))
-      .first();
-
-    if (existingReview) {
-      // Update existing pending review
-      await ctx.db.patch(existingReview._id, {
-        proposedValue: args.value,
-        requestedAt: Date.now(),
-      });
-      return existingReview._id;
-    }
-
-    // Create new review request
+    // Create new review request (allow stacking multiple reviews for same key/locale)
     const reviewId = await ctx.db.insert("translationReviews", {
       translationId: existing?._id,
       keyId: args.keyId,
