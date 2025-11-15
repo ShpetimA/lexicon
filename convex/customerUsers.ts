@@ -118,3 +118,15 @@ export const remove = userMutation({
     return customerUser._id;
   },
 });
+
+export const countByCustomer = userQuery({
+  args: { customerId: v.id("customers") },
+  handler: async (ctx, args) => {
+    const customerUsers = await ctx.db
+      .query("customerUsers")
+      .withIndex("by_customer", (q) => q.eq("customerId", args.customerId))
+      .collect();
+
+    return customerUsers.length;
+  },
+});

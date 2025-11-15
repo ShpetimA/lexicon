@@ -3,13 +3,15 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { TranslationKeyList } from "./-editor/TranslationKeyList";
 import { AddKeyForm } from "./-editor/AddKeyForm";
 import { ScrapeWebsiteSheet } from "./-editor/ScrapeWebsiteSheet";
 import { BulkActionsButton } from "./-editor/BulkActionsButton";
+import { PendingReviewsDrawer } from "./-editor/PendingReviewsDrawer";
 import { useTenant } from "@/src/contexts/TenantContext";
 import { toast } from "sonner";
-import { Plus, Search, Globe } from "lucide-react";
+import { Plus, Search, Globe, Clock } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import useDebouncedValue from "@/src/hooks/use-debounce";
@@ -30,12 +32,23 @@ function TranslationEditorPage() {
 
   const [isAddingKey, setIsAddingKey] = useState(false);
   const [isScrapeDialogOpen, setIsScrapeDialogOpen] = useState(false);
+  const [isPendingReviewsOpen, setIsPendingReviewsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebouncedValue(searchTerm, 300);
   const [currentPage, setCurrentPage] = useState(1);
   const [translationStatuses, setTranslationStatuses] = useState<
     Record<string, TranslationStatus>
   >({});
+
+  const { data: currentUser } = useQuery(
+    convexQuery(api.users.getCurrentUserRecord, {}),
+  );
+
+  const { data: pendingReviews } = useQuery(
+    convexQuery(api.translations.listPendingReviews, {
+      appId: selectedApp._id,
+    }),
+  );
 
   const { data: locales } = useQuery(
     convexQuery(api.locales.list, { appId: selectedApp._id }),
@@ -51,6 +64,7 @@ function TranslationEditorPage() {
   );
 
   const upsertTranslation = useConvexMutation(api.translations.upsert);
+  const submitForReview = useConvexMutation(api.translations.submitForReview);
   const createBatchWithTranslations = useConvexMutation(
     api.translations.createBatchWithTranslations
   );
@@ -78,8 +92,8 @@ function TranslationEditorPage() {
     keyName: string,
     localeId: string,
     value: string,
-  ) => {
-    if (!value) return;
+  ): Promise<{ requiresReview: boolean }> => {
+    if (!value || !currentUser) return { requiresReview: false };
 
     const statusKey = `${keyName}-${localeId}`;
     setTranslationStatuses((prev) => ({ ...prev, [statusKey]: "pending" }));
@@ -89,33 +103,66 @@ function TranslationEditorPage() {
     if (!keyData) {
       toast.error("Key not found");
       setTranslationStatuses((prev) => ({ ...prev, [statusKey]: "error" }));
-      return;
+      return { requiresReview: false };
     }
 
     try {
-      await upsertTranslation({
-        keyId: keyData.key._id,
-        localeId: localeId as Id<"globalLocales">,
-        value,
-      });
+      // Check if locale requires review
+      const locale = locales?.find((l) => l._id === localeId);
+      const requiresReview = locale?.requiresReview || false;
+
+      if (requiresReview) {
+        // Submit for review instead of direct save
+        await submitForReview({
+          keyId: keyData.key._id,
+          localeId: localeId as Id<"globalLocales">,
+          value,
+          updatedBy: currentUser._id,
+        });
+        toast.success("Submitted for review");
+      } else {
+        // Direct save
+        await upsertTranslation({
+          keyId: keyData.key._id,
+          localeId: localeId as Id<"globalLocales">,
+          value,
+          updatedBy: currentUser._id,
+        });
+      }
 
       setTranslationStatuses((prev) => ({ ...prev, [statusKey]: "success" }));
       setTimeout(() => {
         setTranslationStatuses((prev) => ({ ...prev, [statusKey]: "idle" }));
       }, 600);
-    } catch {
+
+      return { requiresReview };
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update translation",
+      );
       setTranslationStatuses((prev) => ({ ...prev, [statusKey]: "error" }));
       setTimeout(() => {
         setTranslationStatuses((prev) => ({ ...prev, [statusKey]: "idle" }));
       }, 600);
+      return { requiresReview: false };
     }
   };
 
-  const keys = editorData?.data
-    ? Object.values(editorData.data).map((item) => item.key)
-    : [];
+   const keys = editorData?.data
+     ? Object.values(editorData.data).map((item) => item.key)
+     : [];
 
-  return (
+   // Create review map for easy lookup: keyId-localeId -> review
+   const reviewMap = pendingReviews?.reduce(
+     (acc, review) => {
+       const key = `${review.keyId}-${review.localeId}`;
+       acc[key] = review;
+       return acc;
+     },
+     {} as Record<string, (typeof pendingReviews)[0]>,
+   ) ?? {};
+
+   return (
     <>
       <div className="flex flex-col h-dvh">
         <div className="h-dvh overflow-hidden">
@@ -141,6 +188,20 @@ function TranslationEditorPage() {
                 />
               </div>
               <div className="flex gap-2 ml-auto">
+                {(pendingReviews?.length || 0) > 0 && (
+                  <Button
+                    onClick={() => setIsPendingReviewsOpen(true)}
+                    size="sm"
+                    variant="outline"
+                    className="gap-2"
+                  >
+                    <Clock className="h-4 w-4" />
+                    Pending Reviews
+                    <Badge variant="secondary" className="ml-1">
+                      {pendingReviews?.length}
+                    </Badge>
+                  </Button>
+                )}
                 <BulkActionsButton
                   appId={selectedApp._id}
                   locales={locales || []}
@@ -182,19 +243,30 @@ function TranslationEditorPage() {
             onComplete={handleScrapedData}
           />
 
-          {editorData && (
-            <TranslationKeyList
-              keys={keys}
-              locales={locales || []}
-              editorData={editorData}
-              translationStatuses={translationStatuses}
-              filteredLocales={locales || []}
-              onUpdateTranslation={handleUpdateTranslation}
-              searchTerm={searchTerm}
-              onAddKey={() => setIsAddingKey(true)}
+          {currentUser && (
+            <PendingReviewsDrawer
+              open={isPendingReviewsOpen}
+              onOpenChange={setIsPendingReviewsOpen}
               appId={selectedApp._id}
+              currentUserId={currentUser._id}
             />
           )}
+
+           {editorData && (
+             <TranslationKeyList
+               keys={keys}
+               locales={locales || []}
+               editorData={editorData}
+               translationStatuses={translationStatuses}
+               filteredLocales={locales || []}
+               onUpdateTranslation={handleUpdateTranslation}
+               searchTerm={searchTerm}
+               onAddKey={() => setIsAddingKey(true)}
+               appId={selectedApp._id}
+               reviewMap={reviewMap}
+               currentUserId={currentUser?._id}
+             />
+           )}
         </div>
         {editorData?.pagination && editorData.pagination.totalPages > 1 && (
           <div className="flex items-center justify-center gap-2 p-4 border-t">

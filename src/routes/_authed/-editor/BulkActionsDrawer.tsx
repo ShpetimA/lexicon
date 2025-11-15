@@ -20,6 +20,8 @@ import {
   useConvexQuery,
 } from "@convex-dev/react-query";
 import { api } from "@/convex/_generated/api";
+import { useQuery } from "@tanstack/react-query";
+import { convexQuery } from "@convex-dev/react-query";
 import { toast } from "sonner";
 import type { Id } from "@/convex/_generated/dataModel";
 import { Badge } from "@/components/ui/badge";
@@ -68,6 +70,7 @@ interface BulkResult {
   locale?: string;
   success: boolean;
   error?: string;
+  requiresReview?: boolean;
 }
 
 export function BulkActionsDrawer({
@@ -96,6 +99,9 @@ export function BulkActionsDrawer({
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<BulkResult[]>([]);
 
+  const { data: currentUser } = useQuery(
+    convexQuery(api.users.getCurrentUserRecord, {}),
+  );
   const bulkTranslateAction = useConvexAction(
     api.translations.bulkAutoTranslate,
   );
@@ -184,6 +190,7 @@ export function BulkActionsDrawer({
           targetLocaleIds: Array.from(targetLocaleIds),
           actionType,
           instructions: instructions || undefined,
+          updatedBy: currentUser?._id,
         });
 
         setResults(response);
@@ -191,9 +198,14 @@ export function BulkActionsDrawer({
 
         const successCount = response.filter((r) => r.success).length;
         const failCount = response.filter((r) => !r.success).length;
+        const reviewCount = response.filter((r) => r.requiresReview).length;
 
         if (failCount === 0) {
-          toast.success(`Completed ${successCount} translations`);
+          if (reviewCount > 0) {
+            toast.success(`Submitted ${reviewCount} translations for review, ${successCount - reviewCount} saved directly`);
+          } else {
+            toast.success(`Completed ${successCount} translations`);
+          }
         } else {
           toast.warning(
             `Completed ${successCount} translations, ${failCount} failed`,

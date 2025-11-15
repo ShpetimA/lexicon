@@ -44,6 +44,8 @@ type TranslationKeyListProps = {
   searchTerm: string;
   onAddKey: () => void;
   appId: Id<"apps">;
+  reviewMap?: Record<string, any>;
+  currentUserId?: Id<"users">;
 };
 
 export function TranslationKeyList({
@@ -56,6 +58,8 @@ export function TranslationKeyList({
   searchTerm,
   onAddKey,
   appId,
+  reviewMap,
+  currentUserId,
 }: TranslationKeyListProps) {
   if (keys.length === 0) {
     return (
@@ -85,19 +89,21 @@ export function TranslationKeyList({
         {keys.map((key) => {
           const keyData = editorData.data[key.name];
           return (
-            <TranslationKeyCard
-              key={key.name}
-              translationKey={key}
-              locales={locales || []}
-              translations={keyData}
-              translationStatuses={translationStatuses}
-              keyName={key.name}
-              filteredLocales={filteredLocales}
-              onUpdateTranslation={(localeId, value) =>
-                onUpdateTranslation(key.name, localeId, value)
-              }
-              appId={appId}
-            />
+             <TranslationKeyCard
+               key={key.name}
+               translationKey={key}
+               locales={locales || []}
+               translations={keyData}
+               translationStatuses={translationStatuses}
+               keyName={key.name}
+               filteredLocales={filteredLocales}
+               onUpdateTranslation={(localeId, value) =>
+                 onUpdateTranslation(key.name, localeId, value)
+               }
+               appId={appId}
+               reviewMap={reviewMap}
+               currentUserId={currentUserId}
+             />
           );
         })}
       </div>

@@ -47,6 +47,7 @@ export default defineSchema({
     appId: v.id("apps"),
     localeId: v.id("globalLocales"),
     isDefault: v.boolean(),
+    requiresReview: v.optional(v.boolean()),
     addedAt: v.number(),
   })
     .index("by_app", ["appId"])
@@ -103,4 +104,29 @@ export default defineSchema({
     createdBy: v.id("users"),
     createdAt: v.number(),
   }).index("by_app", ["appId"]),
+
+  translationReviews: defineTable({
+    translationId: v.optional(v.id("translations")),
+    keyId: v.id("keys"),
+    localeId: v.id("globalLocales"),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("approved"),
+      v.literal("rejected"),
+      v.literal("cancelled")
+    ),
+    proposedValue: v.string(),
+    currentValue: v.optional(v.string()),
+    requestedBy: v.id("users"),
+    reviewedBy: v.optional(v.id("users")),
+    requestedAt: v.number(),
+    reviewedAt: v.optional(v.number()),
+    comment: v.optional(v.string()),
+  })
+    .index("by_translation", ["translationId"])
+    .index("by_key_locale", ["keyId", "localeId"])
+    .index("by_status", ["status"])
+    .index("by_requested_by", ["requestedBy"])
+    .index("by_reviewed_by", ["reviewedBy"])
+    .index("by_locale", ["localeId"]),
 });

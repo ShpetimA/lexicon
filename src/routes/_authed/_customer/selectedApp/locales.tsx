@@ -17,16 +17,24 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Plus, Edit, Trash2 } from "lucide-react";
 import { CreateLocaleDialog } from "../../-locales/CreateLocaleDialog";
 import { UpdateLocaleDialog } from "../../-locales/UpdateLocaleDialog";
 import { DeleteLocaleDialog } from "../../-locales/DeleteLocaleDialog";
-import { convexQuery } from "@convex-dev/react-query";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { useApp } from "@/src/routes/_authed/_customer/selectedApp";
 import { useCustomer } from "@/src/routes/_authed/_customer";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authed/_customer/selectedApp/locales")({
   component: RouteComponent,
@@ -48,6 +56,7 @@ type Locale = {
   isDefault: boolean;
   appLocaleId: Id<"appLocales">;
   addedAt: number;
+  requiresReview?: boolean;
 };
 
 function LocalesPage() {
@@ -65,6 +74,34 @@ function LocalesPage() {
     }),
     enabled: !!selectedApp,
   });
+
+  const { data: userCount } = useQuery({
+    ...convexQuery(api.locales.getUserCount, {
+      appId: selectedApp._id,
+    }),
+    enabled: !!selectedApp,
+  });
+
+  const toggleReviewRequired = useConvexMutation(api.locales.toggleReviewRequired);
+
+  const handleToggleReview = async (
+    appLocaleId: Id<"appLocales">,
+    currentValue: boolean | undefined,
+  ) => {
+    try {
+      await toggleReviewRequired({
+        appLocaleId,
+        requiresReview: !currentValue,
+      });
+      toast.success(
+        !currentValue ? "Review mode enabled" : "Review mode disabled",
+      );
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to toggle review mode",
+      );
+    }
+  };
 
   if (isLoading) {
     return (
@@ -109,6 +146,7 @@ function LocalesPage() {
                   <TableHead>Code</TableHead>
                   <TableHead>Native Name</TableHead>
                   <TableHead>Status</TableHead>
+                  {(userCount || 0) >= 2 && <TableHead>Review Required</TableHead>}
                   <TableHead>Added</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -126,6 +164,34 @@ function LocalesPage() {
                         <Badge variant="secondary">Active</Badge>
                       )}
                     </TableCell>
+                    {(userCount || 0) >= 2 && (
+                      <TableCell>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center gap-2">
+                                <Switch
+                                  checked={locale.requiresReview || false}
+                                  onCheckedChange={() =>
+                                    handleToggleReview(
+                                      locale.appLocaleId,
+                                      locale.requiresReview,
+                                    )
+                                  }
+                                />
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>
+                                {locale.requiresReview
+                                  ? "Disable review mode"
+                                  : "Enable review mode"}
+                              </p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </TableCell>
+                    )}
                     <TableCell>
                       {new Date(locale.addedAt).toLocaleDateString()}
                     </TableCell>

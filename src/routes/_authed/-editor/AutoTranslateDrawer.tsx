@@ -64,6 +64,7 @@ interface TranslationResult {
   locale: string;
   success: boolean;
   error?: string;
+  requiresReview?: boolean;
 }
 
 export function AutoTranslateDrawer({
@@ -155,6 +156,7 @@ export function AutoTranslateDrawer({
         sourceLocaleId,
         targetLocaleIds: Array.from(targetLocaleIds),
         instructions: instructions || undefined,
+        updatedBy: currentUser?._id,
       });
 
       setResults(response);
@@ -162,9 +164,14 @@ export function AutoTranslateDrawer({
 
       const successCount = response.filter((r) => r.success).length;
       const failCount = response.filter((r) => !r.success).length;
+      const reviewCount = response.filter((r) => r.requiresReview).length;
 
       if (failCount === 0) {
-        toast.success(`Translated to ${successCount} locales`);
+        if (reviewCount > 0) {
+          toast.success(`Submitted ${reviewCount} translations for review, ${successCount - reviewCount} saved directly`);
+        } else {
+          toast.success(`Translated to ${successCount} locales`);
+        }
       } else {
         toast.warning(
           `Translated to ${successCount} locales, ${failCount} failed`

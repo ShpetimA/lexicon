@@ -41,9 +41,11 @@ interface TranslationKeyCardProps {
   };
   translationStatuses: Record<string, TranslationStatus>;
   keyName: string;
-  onUpdateTranslation: (localeId: string, value: string) => void;
+  onUpdateTranslation: (localeId: string, value: string) => Promise<{ requiresReview: boolean }>;
   filteredLocales?: Locale[];
   appId: Id<"apps">;
+  reviewMap?: Record<string, any>;
+  currentUserId?: Id<"users">;
 }
 
 export function TranslationKeyCard({
@@ -55,6 +57,8 @@ export function TranslationKeyCard({
   onUpdateTranslation,
   filteredLocales,
   appId,
+  reviewMap,
+  currentUserId,
 }: TranslationKeyCardProps) {
   const displayLocales =
     filteredLocales && filteredLocales.length > 0 ? filteredLocales : locales;
@@ -80,15 +84,20 @@ export function TranslationKeyCard({
           const statusKey = `${keyName}-${locale._id}`;
           const status = translationStatuses[statusKey] || "idle";
 
-          return (
-            <LocaleTranslationRow
-              key={locale._id}
-              locale={locale}
-              translation={translation}
-              status={status}
-              onSave={onUpdateTranslation}
-            />
-          );
+           const reviewKey = `${translationKey._id}-${locale._id}`;
+           const review = reviewMap?.[reviewKey];
+
+           return (
+             <LocaleTranslationRow
+               key={locale._id}
+               locale={locale}
+               translation={translation}
+               status={status}
+               onSave={onUpdateTranslation}
+               review={review}
+               currentUserId={currentUserId}
+             />
+           );
         })}
       </div>
     </div>

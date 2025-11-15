@@ -33,6 +33,7 @@ export const list = userQuery({
           name: globalLocale.name,
           nativeName: globalLocale.nativeName,
           isDefault: appLocale.isDefault,
+          requiresReview: appLocale.requiresReview,
           addedAt: appLocale.addedAt,
           appLocaleId: appLocale._id,
         };
@@ -144,5 +145,84 @@ export const remove = userMutation({
 
     await ctx.db.delete(args.appLocaleId);
     return args.appLocaleId;
+  },
+});
+
+// Toggle review requirement for locale
+export const toggleReviewRequired = userMutation({
+  args: {
+    appLocaleId: v.id("appLocales"),
+    requiresReview: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    const appLocale = await ctx.db.get(args.appLocaleId);
+    if (!appLocale) throw new Error("App locale not found");
+
+    await requireAppAccess(ctx, appLocale.appId, ["owner", "admin"]);
+
+    // Get app to find customer
+    const app = await ctx.db.get(appLocale.appId);
+    if (!app) throw new Error("App not found");
+
+    // Check user count
+    const customerUsers = await ctx.db
+      .query("customerUsers")
+      .withIndex("by_customer", (q) => q.eq("customerId", app.customerId))
+      .collect();
+
+    if (args.requiresReview && customerUsers.length < 2) {
+      throw new Error("Review mode requires at least 2 users");
+    }
+
+    // If disabling review, delete all pending reviews for this locale
+    if (!args.requiresReview && appLocale.requiresReview) {
+      const pendingReviews = await ctx.db
+        .query("translationReviews")
+        .withIndex("by_locale", (q) => q.eq("localeId", appLocale.localeId))
+        .filter((q) => q.eq(q.field("status"), "pending"))
+        .collect();
+
+      for (const review of pendingReviews) {
+        await ctx.db.delete(review._id);
+      }
+    }
+
+    await ctx.db.patch(args.appLocaleId, {
+      requiresReview: args.requiresReview,
+    });
+
+    return args.appLocaleId;
+  },
+});
+
+// Get user count for app (to check if review mode can be enabled)
+export const getUserCount = userQuery({
+  args: { appId: v.id("apps") },
+  handler: async (ctx, args) => {
+    await requireAppAccess(ctx, args.appId, ["owner", "admin", "member"]);
+
+    const app = await ctx.db.get(args.appId);
+    if (!app) throw new Error("App not found");
+
+    const customerUsers = await ctx.db
+      .query("customerUsers")
+      .withIndex("by_customer", (q) => q.eq("customerId", app.customerId))
+      .collect();
+
+    return customerUsers.length;
+  },
+});
+
+// Get pending review count for locale
+export const getPendingReviewCount = userQuery({
+  args: { localeId: v.id("globalLocales") },
+  handler: async (ctx, args) => {
+    const pendingReviews = await ctx.db
+      .query("translationReviews")
+      .withIndex("by_locale", (q) => q.eq("localeId", args.localeId))
+      .filter((q) => q.eq(q.field("status"), "pending"))
+      .collect();
+
+    return pendingReviews.length;
   },
 });
