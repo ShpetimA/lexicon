@@ -5,9 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { TranslationKeyList } from "./-editor/TranslationKeyList";
 import { AddKeyForm } from "./-editor/AddKeyForm";
+import { ScrapeWebsiteSheet } from "./-editor/ScrapeWebsiteSheet";
+import { BulkActionsButton } from "./-editor/BulkActionsButton";
 import { useTenant } from "@/src/contexts/TenantContext";
 import { toast } from "sonner";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Globe } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import useDebouncedValue from "@/src/hooks/use-debounce";
@@ -21,11 +23,13 @@ export const Route = createFileRoute("/_authed/editor")({
 
 function TranslationEditorPage() {
   const { selectedApp } = useTenant();
+  
   if (!selectedApp) {
     return <div>No app selected</div>;
   }
 
   const [isAddingKey, setIsAddingKey] = useState(false);
+  const [isScrapeDialogOpen, setIsScrapeDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebouncedValue(searchTerm, 300);
   const [currentPage, setCurrentPage] = useState(1);
@@ -47,6 +51,28 @@ function TranslationEditorPage() {
   );
 
   const upsertTranslation = useConvexMutation(api.translations.upsert);
+  const createBatchWithTranslations = useConvexMutation(
+    api.translations.createBatchWithTranslations
+  );
+
+  const handleScrapedData = async (
+    localeId: Id<"locales">,
+    translations: Array<{ keyName: string; value: string }>
+  ) => {
+    try {
+      const result = await createBatchWithTranslations({
+        appId: selectedApp._id,
+        localeId,
+        translations,
+      });
+
+      toast.success(
+        `Created ${result.keys} keys and ${result.translations} translations`
+      );
+    } catch (error) {
+      toast.error("Failed to import translations");
+    }
+  };
 
   const handleUpdateTranslation = async (
     keyName: string,
@@ -115,6 +141,20 @@ function TranslationEditorPage() {
                 />
               </div>
               <div className="flex gap-2 ml-auto">
+                <BulkActionsButton
+                  appId={selectedApp._id}
+                  locales={locales || []}
+                  totalKeys={editorData?.pagination.total || 0}
+                />
+                <Button
+                  onClick={() => setIsScrapeDialogOpen(true)}
+                  size="sm"
+                  variant="outline"
+                  className="gap-2"
+                >
+                  <Globe className="h-4 w-4" />
+                  Import from Website
+                </Button>
                 <Button
                   onClick={() => setIsAddingKey(true)}
                   size="sm"
@@ -134,6 +174,14 @@ function TranslationEditorPage() {
             />
           )}
 
+          <ScrapeWebsiteSheet
+            open={isScrapeDialogOpen}
+            onOpenChange={setIsScrapeDialogOpen}
+            appId={selectedApp._id}
+            locales={locales || []}
+            onComplete={handleScrapedData}
+          />
+
           {editorData && (
             <TranslationKeyList
               keys={keys}
@@ -144,6 +192,7 @@ function TranslationEditorPage() {
               onUpdateTranslation={handleUpdateTranslation}
               searchTerm={searchTerm}
               onAddKey={() => setIsAddingKey(true)}
+              appId={selectedApp._id}
             />
           )}
         </div>

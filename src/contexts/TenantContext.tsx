@@ -20,6 +20,7 @@ type TenantContextType = {
   selectedApp: App | null;
   setSelectedCustomer: (customer: Customer | null) => void;
   setSelectedApp: (app: App | null) => void;
+  clearSelectedTenant: () => void;
 };
 
 const TenantContext = createContext<TenantContextType | undefined>(undefined);
@@ -69,11 +70,19 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const clearSelectedTenant = () => {
+    setSelectedCustomer(null);
+    setSelectedApp(null);
+    localStorage.removeItem("selectedCustomer");
+    localStorage.removeItem("selectedApp");
+  };
+
   return (
     <TenantContext.Provider
       value={{
         selectedCustomer,
         selectedApp,
+        clearSelectedTenant,
         setSelectedCustomer,
         setSelectedApp,
       }}

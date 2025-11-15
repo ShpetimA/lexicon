@@ -41,6 +41,7 @@ type TranslationKeyListProps = {
   ) => void;
   searchTerm: string;
   onAddKey: () => void;
+  appId: Id<"apps">;
 };
 
 export function TranslationKeyList({
@@ -52,6 +53,7 @@ export function TranslationKeyList({
   onUpdateTranslation,
   searchTerm,
   onAddKey,
+  appId,
 }: TranslationKeyListProps) {
   if (keys.length === 0) {
     return (
@@ -92,6 +94,7 @@ export function TranslationKeyList({
               onUpdateTranslation={(localeId, value) =>
                 onUpdateTranslation(key.name, localeId, value)
               }
+              appId={appId}
             />
           );
         })}

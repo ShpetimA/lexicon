@@ -10,10 +10,13 @@
 
 import type * as apps from "../apps.js";
 import type * as auth from "../auth.js";
+import type * as autumn from "../autumn.js";
 import type * as customerUsers from "../customerUsers.js";
 import type * as customers from "../customers.js";
 import type * as environments from "../environments.js";
+import type * as firecrawl from "../firecrawl.js";
 import type * as http from "../http.js";
+import type * as instructionTemplates from "../instructionTemplates.js";
 import type * as keys from "../keys.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_roles from "../lib/roles.js";
@@ -30,10 +33,13 @@ import type {
 declare const fullApi: ApiFromModules<{
   apps: typeof apps;
   auth: typeof auth;
+  autumn: typeof autumn;
   customerUsers: typeof customerUsers;
   customers: typeof customers;
   environments: typeof environments;
+  firecrawl: typeof firecrawl;
   http: typeof http;
+  instructionTemplates: typeof instructionTemplates;
   keys: typeof keys;
   "lib/auth": typeof lib_auth;
   "lib/roles": typeof lib_roles;
@@ -2168,4 +2174,5 @@ export declare const components: {
       updateMany: FunctionReference<"mutation", "internal", any, any>;
     };
   };
+  autumn: {};
 };

@@ -19,10 +19,12 @@ import { useQuery } from "@tanstack/react-query";
 import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@/convex/_generated/api";
 import { authClient } from "@/src/lib/auth-client";
+import { useTenant } from "@/src/contexts/TenantContext";
 
 export function NavUser() {
   const { isMobile } = useSidebar();
   const navigate = useNavigate();
+  const { clearSelectedTenant } = useTenant();
   const { data: user } = useQuery(convexQuery(api.auth.getCurrentUser, {}));
 
   if (!user) {
@@ -32,6 +34,7 @@ export function NavUser() {
   const handleLogout = async () => {
     try {
       await authClient.signOut();
+      clearSelectedTenant();
       navigate({ to: "/login" });
     } catch (error) {
       console.error("Logout failed:", error);

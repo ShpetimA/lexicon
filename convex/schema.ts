@@ -87,4 +87,12 @@ export default defineSchema({
     .index("by_environment", ["environmentId"])
     .index("by_app_env_version", ["appId", "environmentId", "version"])
     .index("by_publishedBy", ["publishedBy"]),
+
+  instructionTemplates: defineTable({
+    name: v.string(),
+    instructions: v.string(),
+    appId: v.id("apps"),
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+  }).index("by_app", ["appId"]),
 });

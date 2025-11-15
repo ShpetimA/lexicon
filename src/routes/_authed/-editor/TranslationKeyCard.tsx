@@ -41,6 +41,7 @@ interface TranslationKeyCardProps {
   keyName: string;
   onUpdateTranslation: (localeId: string, value: string) => void;
   filteredLocales?: Locale[];
+  appId: Id<"apps">;
 }
 
 export function TranslationKeyCard({
@@ -51,6 +52,7 @@ export function TranslationKeyCard({
   keyName,
   onUpdateTranslation,
   filteredLocales,
+  appId,
 }: TranslationKeyCardProps) {
   const displayLocales =
     filteredLocales && filteredLocales.length > 0 ? filteredLocales : locales;
@@ -63,6 +65,7 @@ export function TranslationKeyCard({
           keyId={translationKey._id}
           translations={translations.translations}
           locales={locales}
+          appId={appId}
         />
         <TranslationKeyActions translationKey={translationKey} />
       </div>

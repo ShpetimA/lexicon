@@ -20,7 +20,6 @@ export const Route = createFileRoute("/_authed/customers/")({
   component: CustomersPage,
 });
 
-
 function CustomersPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [deleteCustomerId, setDeleteCustomerId] =

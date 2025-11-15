@@ -57,7 +57,7 @@ function LoginPage() {
           return;
         }
 
-        navigate({ to: "/editor" });
+        navigate({ to: "/customers" });
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
       }

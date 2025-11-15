@@ -13,6 +13,7 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthedPricingRouteImport } from './routes/_authed/pricing'
 import { Route as AuthedEnvironmentsRouteImport } from './routes/_authed/environments'
 import { Route as AuthedEditorRouteImport } from './routes/_authed/editor'
 import { Route as AuthedCustomerRouteImport } from './routes/_authed/_customer'
@@ -41,6 +42,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthedPricingRoute = AuthedPricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
+  getParentRoute: () => AuthedRoute,
 } as any)
 const AuthedEnvironmentsRoute = AuthedEnvironmentsRouteImport.update({
   id: '/environments',
@@ -96,6 +102,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/editor': typeof AuthedEditorRoute
   '/environments': typeof AuthedEnvironmentsRoute
+  '/pricing': typeof AuthedPricingRoute
   '/apps': typeof AuthedCustomerAppsRoute
   '/selectedApp': typeof AuthedCustomerSelectedAppRouteWithChildren
   '/customers/$customerId': typeof AuthedCustomersCustomerIdRoute
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/editor': typeof AuthedEditorRoute
   '/environments': typeof AuthedEnvironmentsRoute
+  '/pricing': typeof AuthedPricingRoute
   '/apps': typeof AuthedCustomerAppsRoute
   '/selectedApp': typeof AuthedCustomerSelectedAppRouteWithChildren
   '/customers/$customerId': typeof AuthedCustomersCustomerIdRoute
@@ -125,6 +133,7 @@ export interface FileRoutesById {
   '/_authed/_customer': typeof AuthedCustomerRouteWithChildren
   '/_authed/editor': typeof AuthedEditorRoute
   '/_authed/environments': typeof AuthedEnvironmentsRoute
+  '/_authed/pricing': typeof AuthedPricingRoute
   '/_authed/_customer/apps': typeof AuthedCustomerAppsRoute
   '/_authed/_customer/selectedApp': typeof AuthedCustomerSelectedAppRouteWithChildren
   '/_authed/customers/$customerId': typeof AuthedCustomersCustomerIdRoute
@@ -140,6 +149,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/editor'
     | '/environments'
+    | '/pricing'
     | '/apps'
     | '/selectedApp'
     | '/customers/$customerId'
@@ -153,6 +163,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/editor'
     | '/environments'
+    | '/pricing'
     | '/apps'
     | '/selectedApp'
     | '/customers/$customerId'
@@ -168,6 +179,7 @@ export interface FileRouteTypes {
     | '/_authed/_customer'
     | '/_authed/editor'
     | '/_authed/environments'
+    | '/_authed/pricing'
     | '/_authed/_customer/apps'
     | '/_authed/_customer/selectedApp'
     | '/_authed/customers/$customerId'
@@ -213,6 +225,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authed/pricing': {
+      id: '/_authed/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof AuthedPricingRouteImport
+      parentRoute: typeof AuthedRoute
     }
     '/_authed/environments': {
       id: '/_authed/environments'
@@ -313,6 +332,7 @@ interface AuthedRouteChildren {
   AuthedCustomerRoute: typeof AuthedCustomerRouteWithChildren
   AuthedEditorRoute: typeof AuthedEditorRoute
   AuthedEnvironmentsRoute: typeof AuthedEnvironmentsRoute
+  AuthedPricingRoute: typeof AuthedPricingRoute
   AuthedCustomersCustomerIdRoute: typeof AuthedCustomersCustomerIdRoute
   AuthedCustomersIndexRoute: typeof AuthedCustomersIndexRoute
 }
@@ -321,6 +341,7 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedCustomerRoute: AuthedCustomerRouteWithChildren,
   AuthedEditorRoute: AuthedEditorRoute,
   AuthedEnvironmentsRoute: AuthedEnvironmentsRoute,
+  AuthedPricingRoute: AuthedPricingRoute,
   AuthedCustomersCustomerIdRoute: AuthedCustomersCustomerIdRoute,
   AuthedCustomersIndexRoute: AuthedCustomersIndexRoute,
 }

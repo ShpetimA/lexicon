@@ -17,6 +17,8 @@ import {
 import { authClient } from "../lib/auth-client";
 import { getCookie } from "@tanstack/react-start/server";
 import { createAuth } from "@/convex/auth";
+import { AutumnProvider } from "autumn-js/react";
+import { AutumnWrapper } from "@/src/contexts/AutumnProvider";
 
 const fetchAuth = createServerFn({ method: "GET" }).handler(async () => {
   const sessionCookieName = getCookieName(createAuth);
@@ -75,9 +77,11 @@ function Root() {
       client={context.convexClient}
       authClient={authClient}
     >
-      <RootDocument>
-        <Outlet />
-      </RootDocument>
+      <AutumnWrapper>
+        <RootDocument>
+          <Outlet />
+        </RootDocument>
+      </AutumnWrapper>
     </ConvexBetterAuthProvider>
   );
 }
