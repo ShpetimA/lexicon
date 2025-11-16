@@ -3,8 +3,6 @@ import { TranslationKeyActions } from "./TranslationKeyActions";
 import { AutoTranslateButton } from "./AutoTranslateButton";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
 
-type TranslationStatus = "idle" | "pending" | "success" | "error";
-
 type Key = {
   _id: Id<"keys">;
   name: string;
@@ -23,15 +21,6 @@ type Locale = {
   addedAt: number;
 };
 
-type Translation = {
-  _id: Id<"translations">;
-  value: string;
-  keyId: Id<"keys">;
-  localeId: Id<"globalLocales">;
-  updatedBy: Id<"users">;
-  updatedAt: number;
-};
-
 interface TranslationKeyCardProps {
   translationKey: Key;
   locales: Locale[];
@@ -39,9 +28,7 @@ interface TranslationKeyCardProps {
     key: Doc<"keys">;
     translations: Doc<"translations">[];
   };
-  translationStatuses: Record<string, TranslationStatus>;
   keyName: string;
-  onUpdateTranslation: (localeId: string, value: string) => Promise<{ requiresReview: boolean }>;
   filteredLocales?: Locale[];
   appId: Id<"apps">;
   reviewMap?: Record<string, any>;
@@ -52,9 +39,7 @@ export function TranslationKeyCard({
   translationKey,
   locales,
   translations,
-  translationStatuses,
   keyName,
-  onUpdateTranslation,
   filteredLocales,
   appId,
   reviewMap,
@@ -81,23 +66,20 @@ export function TranslationKeyCard({
           const translation = translations.translations.find(
             (t) => t.localeId === locale._id,
           );
-          const statusKey = `${keyName}-${locale._id}`;
-          const status = translationStatuses[statusKey] || "idle";
 
-           const reviewKey = `${translationKey._id}-${locale._id}`;
-           const reviews = reviewMap?.[reviewKey];
+          const reviewKey = `${translationKey._id}-${locale._id}`;
+          const reviews = reviewMap?.[reviewKey];
 
-           return (
-             <LocaleTranslationRow
-               key={locale._id}
-               locale={locale}
-               translation={translation}
-               status={status}
-               onSave={onUpdateTranslation}
-               reviews={reviews}
-               currentUserId={currentUserId}
-             />
-           );
+          return (
+            <LocaleTranslationRow
+              keyId={translationKey._id}
+              key={locale._id}
+              locale={locale}
+              translation={translation}
+              reviews={reviews}
+              currentUserId={currentUserId}
+            />
+          );
         })}
       </div>
     </div>

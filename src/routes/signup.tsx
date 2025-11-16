@@ -46,7 +46,7 @@ function SignUpPage() {
       password: "",
     },
     validators: {
-      onChange: signUpSchema,
+      onSubmit: signUpSchema,
     },
     onSubmit: async ({ value }) => {
       try {

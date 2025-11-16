@@ -14,7 +14,6 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthedPricingRouteImport } from './routes/_authed/pricing'
-import { Route as AuthedEditorRouteImport } from './routes/_authed/editor'
 import { Route as AuthedCustomerRouteImport } from './routes/_authed/_customer'
 import { Route as AuthedCustomersIndexRouteImport } from './routes/_authed/customers.index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
@@ -23,6 +22,7 @@ import { Route as AuthedCustomerSelectedAppRouteImport } from './routes/_authed/
 import { Route as AuthedCustomerAppsRouteImport } from './routes/_authed/_customer/apps'
 import { Route as AuthedCustomerSelectedAppLocalesRouteImport } from './routes/_authed/_customer/selectedApp/locales'
 import { Route as AuthedCustomerSelectedAppEnvironmentsRouteImport } from './routes/_authed/_customer/selectedApp/environments'
+import { Route as AuthedCustomerSelectedAppEditorRouteImport } from './routes/_authed/_customer/selectedApp/editor'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -46,11 +46,6 @@ const IndexRoute = IndexRouteImport.update({
 const AuthedPricingRoute = AuthedPricingRouteImport.update({
   id: '/pricing',
   path: '/pricing',
-  getParentRoute: () => AuthedRoute,
-} as any)
-const AuthedEditorRoute = AuthedEditorRouteImport.update({
-  id: '/editor',
-  path: '/editor',
   getParentRoute: () => AuthedRoute,
 } as any)
 const AuthedCustomerRoute = AuthedCustomerRouteImport.update({
@@ -96,18 +91,24 @@ const AuthedCustomerSelectedAppEnvironmentsRoute =
     path: '/environments',
     getParentRoute: () => AuthedCustomerSelectedAppRoute,
   } as any)
+const AuthedCustomerSelectedAppEditorRoute =
+  AuthedCustomerSelectedAppEditorRouteImport.update({
+    id: '/editor',
+    path: '/editor',
+    getParentRoute: () => AuthedCustomerSelectedAppRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
-  '/editor': typeof AuthedEditorRoute
   '/pricing': typeof AuthedPricingRoute
   '/apps': typeof AuthedCustomerAppsRoute
   '/selectedApp': typeof AuthedCustomerSelectedAppRouteWithChildren
   '/customers/$customerId': typeof AuthedCustomersCustomerIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/customers': typeof AuthedCustomersIndexRoute
+  '/selectedApp/editor': typeof AuthedCustomerSelectedAppEditorRoute
   '/selectedApp/environments': typeof AuthedCustomerSelectedAppEnvironmentsRoute
   '/selectedApp/locales': typeof AuthedCustomerSelectedAppLocalesRoute
 }
@@ -115,13 +116,13 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
-  '/editor': typeof AuthedEditorRoute
   '/pricing': typeof AuthedPricingRoute
   '/apps': typeof AuthedCustomerAppsRoute
   '/selectedApp': typeof AuthedCustomerSelectedAppRouteWithChildren
   '/customers/$customerId': typeof AuthedCustomersCustomerIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/customers': typeof AuthedCustomersIndexRoute
+  '/selectedApp/editor': typeof AuthedCustomerSelectedAppEditorRoute
   '/selectedApp/environments': typeof AuthedCustomerSelectedAppEnvironmentsRoute
   '/selectedApp/locales': typeof AuthedCustomerSelectedAppLocalesRoute
 }
@@ -132,13 +133,13 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/_authed/_customer': typeof AuthedCustomerRouteWithChildren
-  '/_authed/editor': typeof AuthedEditorRoute
   '/_authed/pricing': typeof AuthedPricingRoute
   '/_authed/_customer/apps': typeof AuthedCustomerAppsRoute
   '/_authed/_customer/selectedApp': typeof AuthedCustomerSelectedAppRouteWithChildren
   '/_authed/customers/$customerId': typeof AuthedCustomersCustomerIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/_authed/customers/': typeof AuthedCustomersIndexRoute
+  '/_authed/_customer/selectedApp/editor': typeof AuthedCustomerSelectedAppEditorRoute
   '/_authed/_customer/selectedApp/environments': typeof AuthedCustomerSelectedAppEnvironmentsRoute
   '/_authed/_customer/selectedApp/locales': typeof AuthedCustomerSelectedAppLocalesRoute
 }
@@ -148,13 +149,13 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/signup'
-    | '/editor'
     | '/pricing'
     | '/apps'
     | '/selectedApp'
     | '/customers/$customerId'
     | '/api/auth/$'
     | '/customers'
+    | '/selectedApp/editor'
     | '/selectedApp/environments'
     | '/selectedApp/locales'
   fileRoutesByTo: FileRoutesByTo
@@ -162,13 +163,13 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/signup'
-    | '/editor'
     | '/pricing'
     | '/apps'
     | '/selectedApp'
     | '/customers/$customerId'
     | '/api/auth/$'
     | '/customers'
+    | '/selectedApp/editor'
     | '/selectedApp/environments'
     | '/selectedApp/locales'
   id:
@@ -178,13 +179,13 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/_authed/_customer'
-    | '/_authed/editor'
     | '/_authed/pricing'
     | '/_authed/_customer/apps'
     | '/_authed/_customer/selectedApp'
     | '/_authed/customers/$customerId'
     | '/api/auth/$'
     | '/_authed/customers/'
+    | '/_authed/_customer/selectedApp/editor'
     | '/_authed/_customer/selectedApp/environments'
     | '/_authed/_customer/selectedApp/locales'
   fileRoutesById: FileRoutesById
@@ -232,13 +233,6 @@ declare module '@tanstack/react-router' {
       path: '/pricing'
       fullPath: '/pricing'
       preLoaderRoute: typeof AuthedPricingRouteImport
-      parentRoute: typeof AuthedRoute
-    }
-    '/_authed/editor': {
-      id: '/_authed/editor'
-      path: '/editor'
-      fullPath: '/editor'
-      preLoaderRoute: typeof AuthedEditorRouteImport
       parentRoute: typeof AuthedRoute
     }
     '/_authed/_customer': {
@@ -297,16 +291,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedCustomerSelectedAppEnvironmentsRouteImport
       parentRoute: typeof AuthedCustomerSelectedAppRoute
     }
+    '/_authed/_customer/selectedApp/editor': {
+      id: '/_authed/_customer/selectedApp/editor'
+      path: '/editor'
+      fullPath: '/selectedApp/editor'
+      preLoaderRoute: typeof AuthedCustomerSelectedAppEditorRouteImport
+      parentRoute: typeof AuthedCustomerSelectedAppRoute
+    }
   }
 }
 
 interface AuthedCustomerSelectedAppRouteChildren {
+  AuthedCustomerSelectedAppEditorRoute: typeof AuthedCustomerSelectedAppEditorRoute
   AuthedCustomerSelectedAppEnvironmentsRoute: typeof AuthedCustomerSelectedAppEnvironmentsRoute
   AuthedCustomerSelectedAppLocalesRoute: typeof AuthedCustomerSelectedAppLocalesRoute
 }
 
 const AuthedCustomerSelectedAppRouteChildren: AuthedCustomerSelectedAppRouteChildren =
   {
+    AuthedCustomerSelectedAppEditorRoute: AuthedCustomerSelectedAppEditorRoute,
     AuthedCustomerSelectedAppEnvironmentsRoute:
       AuthedCustomerSelectedAppEnvironmentsRoute,
     AuthedCustomerSelectedAppLocalesRoute:
@@ -334,7 +337,6 @@ const AuthedCustomerRouteWithChildren = AuthedCustomerRoute._addFileChildren(
 
 interface AuthedRouteChildren {
   AuthedCustomerRoute: typeof AuthedCustomerRouteWithChildren
-  AuthedEditorRoute: typeof AuthedEditorRoute
   AuthedPricingRoute: typeof AuthedPricingRoute
   AuthedCustomersCustomerIdRoute: typeof AuthedCustomersCustomerIdRoute
   AuthedCustomersIndexRoute: typeof AuthedCustomersIndexRoute
@@ -342,7 +344,6 @@ interface AuthedRouteChildren {
 
 const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedCustomerRoute: AuthedCustomerRouteWithChildren,
-  AuthedEditorRoute: AuthedEditorRoute,
   AuthedPricingRoute: AuthedPricingRoute,
   AuthedCustomersCustomerIdRoute: AuthedCustomersCustomerIdRoute,
   AuthedCustomersIndexRoute: AuthedCustomersIndexRoute,

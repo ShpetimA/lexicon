@@ -61,7 +61,7 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
       },
       {
         title: "Editor",
-        url: selectedApp ? `/editor` : "#",
+        url: selectedApp ? `/selectedApp/editor` : "#",
         icon: Edit3,
         disabled: !selectedApp,
         disabledTooltip: "Select an app first",

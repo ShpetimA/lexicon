@@ -16,29 +16,21 @@ import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import useDebouncedValue from "@/src/hooks/use-debounce";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useApp } from "@/src/routes/_authed/_customer/selectedApp";
+import { Pagination } from "@/components/ui/pagination";
 
-type TranslationStatus = "idle" | "pending" | "success" | "error";
-
-export const Route = createFileRoute("/_authed/editor")({
+export const Route = createFileRoute("/_authed/_customer/selectedApp/editor")({
   component: TranslationEditorPage,
 });
 
 function TranslationEditorPage() {
-  const { selectedApp } = useTenant();
-  
-  if (!selectedApp) {
-    return <div>No app selected</div>;
-  }
-
+  const { selectedApp } = useApp();
   const [isAddingKey, setIsAddingKey] = useState(false);
   const [isScrapeDialogOpen, setIsScrapeDialogOpen] = useState(false);
   const [isPendingReviewsOpen, setIsPendingReviewsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebouncedValue(searchTerm, 300);
   const [currentPage, setCurrentPage] = useState(1);
-  const [translationStatuses, setTranslationStatuses] = useState<
-    Record<string, TranslationStatus>
-  >({});
 
   const { data: currentUser } = useQuery(
     convexQuery(api.users.getCurrentUserRecord, {}),
@@ -63,15 +55,13 @@ function TranslationEditorPage() {
     }),
   );
 
-  const upsertTranslation = useConvexMutation(api.translations.upsert);
-  const submitForReview = useConvexMutation(api.translations.submitForReview);
   const createBatchWithTranslations = useConvexMutation(
-    api.translations.createBatchWithTranslations
+    api.translations.createBatchWithTranslations,
   );
 
   const handleScrapedData = async (
     localeId: Id<"globalLocales">,
-    translations: Array<{ keyName: string; value: string }>
+    translations: Array<{ keyName: string; value: string }>,
   ) => {
     try {
       const result = await createBatchWithTranslations({
@@ -81,89 +71,29 @@ function TranslationEditorPage() {
       });
 
       toast.success(
-        `Created ${result.keys} keys and ${result.translations} translations`
+        `Created ${result.keys} keys and ${result.translations} translations`,
       );
     } catch (error) {
       toast.error("Failed to import translations");
     }
   };
 
-  const handleUpdateTranslation = async (
-    keyName: string,
-    localeId: string,
-    value: string,
-  ): Promise<{ requiresReview: boolean }> => {
-    if (!value || !currentUser) return { requiresReview: false };
+  const keys = editorData?.data
+    ? Object.values(editorData.data).map((item) => item.key)
+    : [];
 
-    const statusKey = `${keyName}-${localeId}`;
-    setTranslationStatuses((prev) => ({ ...prev, [statusKey]: "pending" }));
+  const reviewMap =
+    pendingReviews?.reduce(
+      (acc, review) => {
+        const key = `${review.keyId}-${review.localeId}`;
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(review);
+        return acc;
+      },
+      {} as Record<string, typeof pendingReviews>,
+    ) ?? {};
 
-    const keyData = editorData?.data[keyName];
-
-    if (!keyData) {
-      toast.error("Key not found");
-      setTranslationStatuses((prev) => ({ ...prev, [statusKey]: "error" }));
-      return { requiresReview: false };
-    }
-
-    try {
-      // Check if locale requires review
-      const locale = locales?.find((l) => l._id === localeId);
-      const requiresReview = locale?.requiresReview || false;
-
-      if (requiresReview) {
-        // Submit for review instead of direct save
-        await submitForReview({
-          keyId: keyData.key._id,
-          localeId: localeId as Id<"globalLocales">,
-          value,
-          updatedBy: currentUser._id,
-        });
-        toast.success("Submitted for review");
-      } else {
-        // Direct save
-        await upsertTranslation({
-          keyId: keyData.key._id,
-          localeId: localeId as Id<"globalLocales">,
-          value,
-          updatedBy: currentUser._id,
-        });
-      }
-
-      setTranslationStatuses((prev) => ({ ...prev, [statusKey]: "success" }));
-      setTimeout(() => {
-        setTranslationStatuses((prev) => ({ ...prev, [statusKey]: "idle" }));
-      }, 600);
-
-      return { requiresReview };
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to update translation",
-      );
-      setTranslationStatuses((prev) => ({ ...prev, [statusKey]: "error" }));
-      setTimeout(() => {
-        setTranslationStatuses((prev) => ({ ...prev, [statusKey]: "idle" }));
-      }, 600);
-      return { requiresReview: false };
-    }
-  };
-
-   const keys = editorData?.data
-     ? Object.values(editorData.data).map((item) => item.key)
-     : [];
-
-   // Create review map for easy lookup: keyId-localeId -> array of reviews (for stacking)
-   const reviewMap = pendingReviews?.reduce(
-     (acc, review) => {
-       const key = `${review.keyId}-${review.localeId}`;
-       if (!acc[key]) acc[key] = [];
-       acc[key].push(review);
-       return acc;
-     },
-     {} as Record<string, typeof pendingReviews>,
-   ) ?? {};
-
-   return (
+  return (
     <>
       <div className="flex flex-col h-dvh">
         <div className="h-dvh overflow-hidden">
@@ -253,21 +183,19 @@ function TranslationEditorPage() {
             />
           )}
 
-           {editorData && (
-             <TranslationKeyList
-               keys={keys}
-               locales={locales || []}
-               editorData={editorData}
-               translationStatuses={translationStatuses}
-               filteredLocales={locales || []}
-               onUpdateTranslation={handleUpdateTranslation}
-               searchTerm={searchTerm}
-               onAddKey={() => setIsAddingKey(true)}
-               appId={selectedApp._id}
-               reviewMap={reviewMap}
-               currentUserId={currentUser?._id}
-             />
-           )}
+          {editorData && (
+            <TranslationKeyList
+              keys={keys}
+              locales={locales || []}
+              editorData={editorData}
+              filteredLocales={locales || []}
+              searchTerm={searchTerm}
+              onAddKey={() => setIsAddingKey(true)}
+              appId={selectedApp._id}
+              reviewMap={reviewMap}
+              currentUserId={currentUser?._id}
+            />
+          )}
         </div>
         {editorData?.pagination && editorData.pagination.totalPages > 1 && (
           <div className="flex items-center justify-center gap-2 p-4 border-t">

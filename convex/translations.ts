@@ -199,7 +199,7 @@ export const createBatchWithTranslations = mutation({
   },
   handler: async (ctx, args) => {
     const createdCount = { keys: 0, translations: 0 };
-    
+
     for (const item of args.translations) {
       let key = await ctx.db
         .query("keys")
@@ -368,16 +368,16 @@ export const bulkAutoTranslate = action({
       page: 1,
       limit: 10000,
     });
-    
+
     let keys = Object.values(keysData.data).map(item => item.key);
-    
+
     // Filter by selected key names if provided
     if (args.keyNames && args.keyNames.length > 0) {
       const keyNameSet = new Set(args.keyNames);
       keys = keys.filter(key => keyNameSet.has(key.name));
     }
     const locales = await ctx.runQuery(api.locales.list, { appId: args.appId });
-    
+
     const sourceLocale = locales.find((l) => l._id === args.sourceLocaleId);
     if (!sourceLocale) {
       throw new Error("Source locale not found");
