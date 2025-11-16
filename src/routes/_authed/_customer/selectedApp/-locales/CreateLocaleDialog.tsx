@@ -16,11 +16,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useTenant } from "../../../contexts/TenantContext";
-import { useMutation, useQuery } from "convex/react";
-import { api } from "../../../../convex/_generated/api";
+import { api } from "@/convex/_generated/api";
 import { useAppForm } from "@/src/hooks/useAppForm";
-import { Id } from "../../../../convex/_generated/dataModel";
+import { Id } from "@/convex/_generated/dataModel";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useApp } from "@/src/routes/_authed/_customer/selectedApp";
+import { FieldError, FieldLabel } from "@/components/ui/field";
 
 const localeSchema = z.object({
   localeId: z.string().min(1, "Please select a locale"),
@@ -32,20 +34,31 @@ type CreateLocaleDialogProps = {
   onOpenChange: (open: boolean) => void;
 };
 
-export function CreateLocaleDialog({ open, onOpenChange }: CreateLocaleDialogProps) {
-  const { selectedApp } = useTenant();
-  const createLocale = useMutation(api.locales.create);
-  
-  const globalLocales = useQuery(api.locales.listGlobal, {});
-  const appLocales = useQuery(
-    api.locales.list,
-    selectedApp ? { appId: selectedApp._id } : "skip"
-  );
+export function CreateLocaleDialog({
+  open,
+  onOpenChange,
+}: CreateLocaleDialogProps) {
+  const { selectedApp } = useApp();
+  const { mutateAsync } = useMutation({
+    mutationFn: useConvexMutation(api.locales.create),
+    onError: () => {
+      toast.error("Failed to create locale");
+    },
+  });
 
-  // Filter out locales already added to this app
-  const availableLocales = globalLocales?.filter(
-    (gl) => !appLocales?.some((al) => al._id === gl._id)
-  ) ?? [];
+  const { data: globalLocales } = useQuery({
+    ...convexQuery(api.locales.listGlobal, {}),
+  });
+  const { data: appLocales } = useQuery({
+    ...convexQuery(api.locales.list, {
+      appId: selectedApp._id,
+    }),
+  });
+
+  const availableLocales =
+    globalLocales?.filter(
+      (gl) => !appLocales?.some((al) => al._id === gl._id),
+    ) ?? [];
 
   const form = useAppForm({
     defaultValues: {
@@ -56,22 +69,14 @@ export function CreateLocaleDialog({ open, onOpenChange }: CreateLocaleDialogPro
       onChange: localeSchema,
     },
     onSubmit: async ({ value }) => {
-      if (!selectedApp) {
-        toast.error("No app selected");
-        return;
-      }
-      try {
-        await createLocale({
-          appId: selectedApp._id,
-          localeId: value.localeId as Id<"globalLocales">,
-          isDefault: value.isDefault,
-        });
-        toast.success("Locale added successfully");
-        onOpenChange(false);
-        form.reset();
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Failed to add locale");
-      }
+      await mutateAsync({
+        appId: selectedApp._id,
+        localeId: value.localeId as Id<"globalLocales">,
+        isDefault: value.isDefault,
+      });
+      toast.success("Locale added successfully");
+      onOpenChange(false);
+      form.reset();
     },
   });
 
@@ -81,21 +86,15 @@ export function CreateLocaleDialog({ open, onOpenChange }: CreateLocaleDialogPro
         <DialogHeader>
           <DialogTitle>Add New Locale</DialogTitle>
           <DialogDescription>
-            Add a new locale for your app. Use BCP 47 format (e.g., "en",
-            "fr", "en-US").
+            Add a new locale for your app. Use BCP 47 format (e.g., "en", "fr",
+            "en-US").
           </DialogDescription>
         </DialogHeader>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            form.handleSubmit();
-          }}
-          className="space-y-4"
-        >
+        <form.Form onSubmit={form.handleSubmit}>
           <form.AppField name="localeId">
             {(field) => (
               <div className="space-y-2">
-                <label className="text-sm font-medium">Locale</label>
+                <FieldLabel className="text-sm font-medium">Locale</FieldLabel>
                 <Select
                   value={field.state.value}
                   onValueChange={(value) => field.handleChange(value)}
@@ -112,18 +111,14 @@ export function CreateLocaleDialog({ open, onOpenChange }: CreateLocaleDialogPro
                   </SelectContent>
                 </Select>
                 {field.state.meta.errors.length > 0 && (
-                  <p className="text-sm text-red-500">
-                    {String(field.state.meta.errors[0])}
-                  </p>
+                  <FieldError errors={field.state.meta.errors} />
                 )}
               </div>
             )}
           </form.AppField>
 
           <form.AppField name="isDefault">
-            {(field) => (
-              <field.CheckboxField label="Set as default locale" />
-            )}
+            {(field) => <field.CheckboxField label="Set as default locale" />}
           </form.AppField>
 
           <DialogFooter>
@@ -131,12 +126,13 @@ export function CreateLocaleDialog({ open, onOpenChange }: CreateLocaleDialogPro
               Cancel
             </Button>
             <form.AppForm>
-              <form.SubmitButton loadingText="Adding...">Add Locale</form.SubmitButton>
+              <form.SubmitButton loadingText="Adding...">
+                Add Locale
+              </form.SubmitButton>
             </form.AppForm>
           </DialogFooter>
-        </form>
+        </form.Form>
       </DialogContent>
     </Dialog>
   );
 }
-

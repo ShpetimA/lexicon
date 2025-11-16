@@ -9,10 +9,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useMutation } from "convex/react";
-import { api } from "../../../../convex/_generated/api";
-import type { Id } from "../../../../convex/_generated/dataModel";
+import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
 import { useAppForm } from "@/src/hooks/useAppForm";
+import { useConvexMutation } from "@convex-dev/react-query";
+import { useMutation } from "@tanstack/react-query";
 
 const localeSchema = z.object({
   isDefault: z.boolean(),
@@ -29,7 +30,7 @@ type Locale = {
 
 type UpdateLocaleDialogProps = {
   open: boolean;
-  locale: Locale | null;
+  locale: Locale;
   onOpenChange: (open: boolean) => void;
 };
 
@@ -38,7 +39,12 @@ export function UpdateLocaleDialog({
   locale,
   onOpenChange,
 }: UpdateLocaleDialogProps) {
-  const updateLocale = useMutation(api.locales.update);
+  const { mutateAsync } = useMutation({
+    mutationFn: useConvexMutation(api.locales.update),
+    onError: () => {
+      toast.error("Failed to update locale");
+    },
+  });
 
   const form = useAppForm({
     defaultValues: {
@@ -48,17 +54,12 @@ export function UpdateLocaleDialog({
       onChange: localeSchema,
     },
     onSubmit: async ({ value }) => {
-      if (!locale) return;
-      try {
-        await updateLocale({
-          appLocaleId: locale.appLocaleId,
-          isDefault: value.isDefault,
-        });
-        toast.success("Locale updated successfully");
-        onOpenChange(false);
-      } catch {
-        toast.error("Failed to update locale");
-      }
+      await mutateAsync({
+        appLocaleId: locale.appLocaleId,
+        isDefault: value.isDefault,
+      });
+      toast.success("Locale updated successfully");
+      onOpenChange(false);
     },
   });
 
@@ -71,13 +72,7 @@ export function UpdateLocaleDialog({
             Update settings for {locale?.name} ({locale?.code})
           </DialogDescription>
         </DialogHeader>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            form.handleSubmit();
-          }}
-          className="space-y-4"
-        >
+        <form.Form onSubmit={form.handleSubmit}>
           <div className="space-y-2">
             <label className="text-sm font-medium">Locale</label>
             <div className="text-sm text-muted-foreground">
@@ -86,9 +81,7 @@ export function UpdateLocaleDialog({
           </div>
 
           <form.AppField name="isDefault">
-            {(field) => (
-              <field.CheckboxField label="Set as default locale" />
-            )}
+            {(field) => <field.CheckboxField label="Set as default locale" />}
           </form.AppField>
 
           <DialogFooter>
@@ -100,10 +93,12 @@ export function UpdateLocaleDialog({
               Cancel
             </Button>
             <form.AppForm>
-              <form.SubmitButton loadingText="Updating...">Update</form.SubmitButton>
+              <form.SubmitButton loadingText="Updating...">
+                Update
+              </form.SubmitButton>
             </form.AppForm>
           </DialogFooter>
-        </form>
+        </form.Form>
       </DialogContent>
     </Dialog>
   );
