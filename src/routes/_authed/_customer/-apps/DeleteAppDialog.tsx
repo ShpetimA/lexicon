@@ -1,4 +1,4 @@
-import { Button } from "../../../../components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -6,16 +6,16 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "../../../../components/ui/dialog";
-import { useMutation } from "convex/react";
-import { api } from "../../../../convex/_generated/api";
-import { Id } from "../../../../convex/_generated/dataModel";
+} from "@/components/ui/dialog";
+import { useMutation } from "@tanstack/react-query";
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useConvexMutation } from "@convex-dev/react-query";
 
 type DeleteAppDialogProps = {
   open: boolean;
-  appId: Id<"apps"> | null;
+  appId: Id<"apps">;
   onOpenChange: (open: boolean) => void;
 };
 
@@ -24,21 +24,17 @@ export function DeleteAppDialog({
   appId,
   onOpenChange,
 }: DeleteAppDialogProps) {
-  const [isDeleting, setIsDeleting] = useState(false);
-  const deleteApp = useMutation(api.apps.remove);
+  const { mutateAsync, isPending } = useMutation({
+    mutationFn: useConvexMutation(api.apps.remove),
+    onError: () => {
+      toast.error("Failed to delete app");
+    },
+  });
 
   const handleDelete = async () => {
-    if (!appId) return;
-    setIsDeleting(true);
-    try {
-      await deleteApp({ id: appId });
-      toast.success("App deleted successfully");
-      onOpenChange(false);
-    } catch {
-      toast.error("Failed to delete app");
-    } finally {
-      setIsDeleting(false);
-    }
+    await mutateAsync({ id: appId });
+    toast.success("App deleted successfully");
+    onOpenChange(false);
   };
 
   return (
@@ -58,9 +54,9 @@ export function DeleteAppDialog({
           <Button
             variant="destructive"
             onClick={handleDelete}
-            disabled={isDeleting || !appId}
+            disabled={isPending}
           >
-            {isDeleting ? "Deleting..." : "Delete"}
+            {isPending ? "Deleting..." : "Delete"}
           </Button>
         </DialogFooter>
       </DialogContent>
