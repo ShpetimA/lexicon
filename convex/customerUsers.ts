@@ -17,13 +17,7 @@ export const list = userQuery({
         const user = await ctx.db.get(customerUser.userId);
         return {
           ...customerUser,
-          user: user
-            ? {
-                _id: user._id,
-                email: user.email,
-                name: user.name,
-              }
-            : null,
+          user: user,
         };
       }),
     );

@@ -8,11 +8,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../../../../components/ui/dialog";
-import { useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { z } from "zod";
 import { useAppForm } from "@/src/hooks/useAppForm";
-import { Id } from "@/convex/_generated/dataModel";
+import { Doc } from "@/convex/_generated/dataModel";
 import {
   Select,
   SelectContent,
@@ -21,14 +20,13 @@ import {
   SelectValue,
 } from "../../../../components/ui/select";
 import { Label } from "../../../../components/ui/label";
+import { useConvexMutation } from "@convex-dev/react-query";
+import { useMutation } from "@tanstack/react-query";
 
 type UpdateUserRoleDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  customerId: Id<"customers">;
-  userId: Id<"users"> | null;
-  currentRole: "owner" | "admin" | "member";
-  userName: string;
+  customerUser: Doc<"customerUsers"> & { user: Doc<"users"> | null };
 };
 
 const roleSchema = z.object({
@@ -38,35 +36,30 @@ const roleSchema = z.object({
 export function UpdateUserRoleDialog({
   open,
   onOpenChange,
-  customerId,
-  userId,
-  currentRole,
-  userName,
+  customerUser,
 }: UpdateUserRoleDialogProps) {
-  const updateRole = useMutation(api.customerUsers.updateRole);
+  const { mutateAsync } = useMutation({
+    mutationFn: useConvexMutation(api.customerUsers.updateRole),
+    onError: () => {
+      toast.error("Failed to update user role");
+    },
+  });
 
   const form = useAppForm({
     defaultValues: {
-      role: currentRole,
+      role: customerUser.role,
     },
     validators: {
       onChange: roleSchema,
     },
     onSubmit: async ({ value }) => {
-      if (!userId) return;
-      try {
-        await updateRole({
-          customerId,
-          userId,
-          role: value.role,
-        });
-        toast.success("User role updated successfully");
-        onOpenChange(false);
-      } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "Failed to update role",
-        );
-      }
+      await mutateAsync({
+        customerId: customerUser.customerId,
+        userId: customerUser.userId,
+        role: value.role,
+      });
+      toast.success("User role updated successfully");
+      onOpenChange(false);
     },
   });
 
@@ -76,16 +69,10 @@ export function UpdateUserRoleDialog({
         <DialogHeader>
           <DialogTitle>Update User Role</DialogTitle>
           <DialogDescription>
-            Update the role for {userName} in this organization.
+            Update the role for {customerUser.user?.name} in this organization.
           </DialogDescription>
         </DialogHeader>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            form.handleSubmit();
-          }}
-          className="space-y-4"
-        >
+        <form.Form onSubmit={form.handleSubmit}>
           <form.AppField name="role">
             {(field) => (
               <div className="space-y-2">
@@ -128,7 +115,7 @@ export function UpdateUserRoleDialog({
               </form.SubmitButton>
             </form.AppForm>
           </DialogFooter>
-        </form>
+        </form.Form>
       </DialogContent>
     </Dialog>
   );

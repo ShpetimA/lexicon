@@ -19,6 +19,7 @@ import { getCookie } from "@tanstack/react-start/server";
 import { createAuth } from "@/convex/auth";
 import { AutumnProvider } from "autumn-js/react";
 import { AutumnWrapper } from "@/src/contexts/AutumnProvider";
+import { Toaster } from "sonner";
 
 const fetchAuth = createServerFn({ method: "GET" }).handler(async () => {
   const sessionCookieName = getCookieName(createAuth);
@@ -95,6 +96,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
       <body>
         {children}
         <Scripts />
+        <Toaster />
       </body>
     </html>
   );

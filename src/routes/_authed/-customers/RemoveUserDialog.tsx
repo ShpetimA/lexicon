@@ -8,44 +8,36 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "../../../../components/ui/alert-dialog";
-import { useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
-import { Id } from "@/convex/_generated/dataModel";
-import { useState } from "react";
+import { Doc, Id } from "@/convex/_generated/dataModel";
+import { useConvexMutation } from "@convex-dev/react-query";
+import { useMutation } from "@tanstack/react-query";
 
 type RemoveUserDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  customerId: Id<"customers"> | null;
-  userId: Id<"users"> | null;
-  userName: string;
+  customerUser: Doc<"customerUsers"> & { user: Doc<"users"> | null };
 };
 
 export function RemoveUserDialog({
   open,
   onOpenChange,
-  customerId,
-  userId,
-  userName,
+  customerUser,
 }: RemoveUserDialogProps) {
-  const removeUser = useMutation(api.customerUsers.remove);
-  const [isRemoving, setIsRemoving] = useState(false);
+  const { mutateAsync, isPending } = useMutation({
+    mutationFn: useConvexMutation(api.customerUsers.remove),
+    onError: () => {
+      toast.error("Failed to remove user");
+    },
+  });
 
   const handleRemove = async () => {
-    if (!customerId || !userId) return;
-
-    setIsRemoving(true);
-    try {
-      await removeUser({ customerId, userId });
-      toast.success("User removed successfully");
-      onOpenChange(false);
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to remove user",
-      );
-    } finally {
-      setIsRemoving(false);
-    }
+    await mutateAsync({
+      customerId: customerUser.customerId,
+      userId: customerUser.userId,
+    });
+    toast.success("User removed successfully");
+    onOpenChange(false);
   };
 
   return (
@@ -54,8 +46,8 @@ export function RemoveUserDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Remove User</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to remove {userName} from this organization?
-            This action cannot be undone.
+            Are you sure you want to remove {customerUser.user?.name} from this
+            organization? This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -65,9 +57,9 @@ export function RemoveUserDialog({
           <Button
             variant="destructive"
             onClick={handleRemove}
-            disabled={isRemoving}
+            disabled={isPending}
           >
-            {isRemoving ? "Removing..." : "Remove User"}
+            {isPending ? "Removing..." : "Remove User"}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

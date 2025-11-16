@@ -8,10 +8,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../../../../components/ui/dialog";
-import { useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { z } from "zod";
 import { useAppForm } from "@/src/hooks/useAppForm";
+import { useMutation } from "@tanstack/react-query";
+import { useConvexMutation } from "@convex-dev/react-query";
 
 type CreateCustomerDialogProps = {
   open: boolean;
@@ -26,7 +27,12 @@ export function CreateCustomerDialog({
   open,
   onOpenChange,
 }: CreateCustomerDialogProps) {
-  const createCustomer = useMutation(api.customers.create);
+  const { mutateAsync } = useMutation({
+    mutationFn: useConvexMutation(api.customers.create),
+    onError: () => {
+      toast.error("Failed to create customer");
+    },
+  });
 
   const form = useAppForm({
     defaultValues: {
@@ -36,14 +42,10 @@ export function CreateCustomerDialog({
       onChange: customerSchema,
     },
     onSubmit: async ({ value }) => {
-      try {
-        await createCustomer({ name: value.name });
-        toast.success("Customer created successfully");
-        onOpenChange(false);
-        form.reset();
-      } catch {
-        toast.error("Failed to create customer");
-      }
+      await mutateAsync({ name: value.name });
+      toast.success("Customer created successfully");
+      onOpenChange(false);
+      form.reset();
     },
   });
 
@@ -56,13 +58,7 @@ export function CreateCustomerDialog({
             Create a new organization to organize your apps and translations.
           </DialogDescription>
         </DialogHeader>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            form.handleSubmit();
-          }}
-          className="space-y-4"
-        >
+        <form.Form onSubmit={form.handleSubmit}>
           <form.AppField name="name">
             {(field) => (
               <field.TextField
@@ -83,7 +79,7 @@ export function CreateCustomerDialog({
               </form.SubmitButton>
             </form.AppForm>
           </DialogFooter>
-        </form>
+        </form.Form>
       </DialogContent>
     </Dialog>
   );

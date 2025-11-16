@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,28 +25,39 @@ import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
+import Loading from "@/components/ui/loading";
 
 export const Route = createFileRoute("/_authed/customers/$customerId")({
-  component: CustomerDetailPage,
+  loader: async ({ context, params }) => {
+    const customerId = params.customerId as Id<"customers">;
+    await Promise.all([
+      context.queryClient.ensureQueryData(
+        convexQuery(api.customers.get, { id: customerId }),
+      ),
+      context.queryClient.ensureQueryData(
+        convexQuery(api.customerUsers.list, {
+          customerId: customerId,
+        }),
+      ),
+    ]);
+  },
+  component: () => (
+    <Suspense fallback={<Loading />}>
+      <CustomerDetailPage />
+    </Suspense>
+  ),
 });
 
-type UserToUpdate = {
+type UserAction = {
   userId: Id<"users">;
-  role: "owner" | "admin" | "member";
-  name: string;
-};
-
-type UserToRemove = {
-  userId: Id<"users">;
-  name: string;
+  action: "invite" | "updateRole" | "remove";
 };
 
 function CustomerDetailPage() {
   const params = Route.useParams();
   const customerId = params.customerId as Id<"customers">;
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
-  const [userToUpdate, setUserToUpdate] = useState<UserToUpdate | null>(null);
-  const [userToRemove, setUserToRemove] = useState<UserToRemove | null>(null);
+  const [action, setAction] = useState<UserAction | null>(null);
 
   const { data: customer } = useSuspenseQuery(
     convexQuery(api.customers.get, { id: customerId }),
@@ -70,6 +81,10 @@ function CustomerDetailPage() {
         return "outline";
     }
   };
+
+  const selectedCustomer = customerUsers.find(
+    (customerUser) => customerUser.userId === action?.userId,
+  );
 
   return (
     <div className="container mx-auto py-8 px-4 space-y-6">
@@ -134,12 +149,9 @@ function CustomerDetailPage() {
                           size="sm"
                           onClick={() => {
                             if (customerUser.user) {
-                              setUserToUpdate({
+                              setAction({
                                 userId: customerUser.userId,
-                                role: customerUser.role,
-                                name:
-                                  customerUser.user.name ||
-                                  customerUser.user.email,
+                                action: "updateRole",
                               });
                             }
                           }}
@@ -151,11 +163,9 @@ function CustomerDetailPage() {
                           size="sm"
                           onClick={() => {
                             if (customerUser.user) {
-                              setUserToRemove({
+                              setAction({
                                 userId: customerUser.userId,
-                                name:
-                                  customerUser.user.name ||
-                                  customerUser.user.email,
+                                action: "remove",
                               });
                             }
                           }}
@@ -172,32 +182,32 @@ function CustomerDetailPage() {
         </CardContent>
       </Card>
 
-      <InviteUserDialog
-        open={isInviteDialogOpen}
-        onOpenChange={setIsInviteDialogOpen}
-        customerId={customerId as Id<"customers">}
-      />
+      {isInviteDialogOpen && (
+        <InviteUserDialog
+          open={true}
+          onOpenChange={setIsInviteDialogOpen}
+          customerId={customerId}
+        />
+      )}
 
-      <UpdateUserRoleDialog
-        open={!!userToUpdate}
-        onOpenChange={(open) => {
-          if (!open) setUserToUpdate(null);
-        }}
-        customerId={customerId as Id<"customers">}
-        userId={userToUpdate?.userId || null}
-        currentRole={userToUpdate?.role || "member"}
-        userName={userToUpdate?.name || ""}
-      />
-
-      <RemoveUserDialog
-        open={!!userToRemove}
-        onOpenChange={(open) => {
-          if (!open) setUserToRemove(null);
-        }}
-        customerId={customerId as Id<"customers">}
-        userId={userToRemove?.userId || null}
-        userName={userToRemove?.name || ""}
-      />
+      {action?.action === "updateRole" && selectedCustomer && (
+        <UpdateUserRoleDialog
+          open={true}
+          onOpenChange={(open) => {
+            if (!open) setAction(null);
+          }}
+          customerUser={selectedCustomer}
+        />
+      )}
+      {action?.action === "remove" && selectedCustomer && (
+        <RemoveUserDialog
+          open={true}
+          onOpenChange={(open) => {
+            if (!open) setAction(null);
+          }}
+          customerUser={selectedCustomer}
+        />
+      )}
     </div>
   );
 }

@@ -8,7 +8,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../../../../components/ui/dialog";
-import { useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { z } from "zod";
 import { useAppForm } from "@/src/hooks/useAppForm";
@@ -21,6 +20,8 @@ import {
   SelectValue,
 } from "../../../../components/ui/select";
 import { Label } from "../../../../components/ui/label";
+import { useMutation } from "@tanstack/react-query";
+import { useConvexMutation } from "@convex-dev/react-query";
 
 type InviteUserDialogProps = {
   open: boolean;
@@ -29,7 +30,7 @@ type InviteUserDialogProps = {
 };
 
 const inviteSchema = z.object({
-  email: z.string().email("Invalid email address"),
+  email: z.email("Invalid email address"),
   role: z.enum(["admin", "member"]),
 });
 
@@ -38,7 +39,12 @@ export function InviteUserDialog({
   onOpenChange,
   customerId,
 }: InviteUserDialogProps) {
-  const inviteUser = useMutation(api.customerUsers.invite);
+  const { mutateAsync } = useMutation({
+    mutationFn: useConvexMutation(api.customerUsers.invite),
+    onError: () => {
+      toast.error("Failed to invite user");
+    },
+  });
 
   const form = useAppForm({
     defaultValues: {
@@ -46,23 +52,17 @@ export function InviteUserDialog({
       role: "member" as "admin" | "member",
     },
     validators: {
-      onChange: inviteSchema,
+      onSubmit: inviteSchema,
     },
     onSubmit: async ({ value }) => {
-      try {
-        await inviteUser({
-          customerId,
-          email: value.email,
-          role: value.role,
-        });
-        toast.success("User invited successfully");
-        onOpenChange(false);
-        form.reset();
-      } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "Failed to invite user",
-        );
-      }
+      await mutateAsync({
+        customerId,
+        email: value.email,
+        role: value.role,
+      });
+      toast.success("User invited successfully");
+      onOpenChange(false);
+      form.reset();
     },
   });
 
@@ -75,13 +75,7 @@ export function InviteUserDialog({
             Invite a user to join this organization by email address.
           </DialogDescription>
         </DialogHeader>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            form.handleSubmit();
-          }}
-          className="space-y-4"
-        >
+        <form.Form onSubmit={form.handleSubmit}>
           <form.AppField name="email">
             {(field) => (
               <field.TextField
@@ -134,7 +128,7 @@ export function InviteUserDialog({
               </form.SubmitButton>
             </form.AppForm>
           </DialogFooter>
-        </form>
+        </form.Form>
       </DialogContent>
     </Dialog>
   );

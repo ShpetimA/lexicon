@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,9 +15,19 @@ import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
+import Loading from "@/components/ui/loading";
 
 export const Route = createFileRoute("/_authed/customers/")({
-  component: CustomersPage,
+  loader: async ({ context }) => {
+    await context.queryClient.ensureQueryData(
+      convexQuery(api.customers.list, {}),
+    );
+  },
+  component: () => (
+    <Suspense fallback={<Loading />}>
+      <CustomersPage />
+    </Suspense>
+  ),
 });
 
 function CustomersPage() {
@@ -41,27 +51,9 @@ function CustomersPage() {
           <Plus className="h-4 w-4 mr-2" />
           Create Organization
         </Button>
-        <CreateCustomerDialog
-          open={isCreateDialogOpen}
-          onOpenChange={setIsCreateDialogOpen}
-        />
       </div>
-
       {customers.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Building2 className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No organizations yet</h3>
-            <p className="text-muted-foreground text-center mb-4">
-              Create your first organization to start organizing your apps and
-              translations.
-            </p>
-            <Button onClick={() => setIsCreateDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Organization
-            </Button>
-          </CardContent>
-        </Card>
+        <EmptyCustomers onCreate={() => setIsCreateDialogOpen(true)} />
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {customers.map((customer) => {
@@ -110,13 +102,42 @@ function CustomersPage() {
         </div>
       )}
 
-      <DeleteCustomerDialog
-        open={!!deleteCustomerId}
-        customerId={deleteCustomerId}
-        onOpenChange={(open) => {
-          if (!open) setDeleteCustomerId(null);
-        }}
+      {deleteCustomerId && (
+        <DeleteCustomerDialog
+          open={true}
+          customerId={deleteCustomerId}
+          onOpenChange={(open) => {
+            if (!open) setDeleteCustomerId(null);
+          }}
+        />
+      )}
+      <CreateCustomerDialog
+        open={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
       />
     </div>
   );
 }
+
+type EmptyCustomersProps = {
+  onCreate: () => void;
+};
+
+const EmptyCustomers = ({ onCreate }: EmptyCustomersProps) => {
+  return (
+    <Card>
+      <CardContent className="flex flex-col items-center justify-center py-12">
+        <Building2 className="h-12 w-12 text-muted-foreground mb-4" />
+        <h3 className="text-lg font-semibold mb-2">No organizations yet</h3>
+        <p className="text-muted-foreground text-center mb-4">
+          Create your first organization to start organizing your apps and
+          translations.
+        </p>
+        <Button onClick={onCreate}>
+          <Plus className="h-4 w-4 mr-2" />
+          Create Organization
+        </Button>
+      </CardContent>
+    </Card>
+  );
+};

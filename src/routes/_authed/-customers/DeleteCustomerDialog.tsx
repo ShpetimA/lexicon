@@ -7,15 +7,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../../../../components/ui/dialog";
-import { useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { Id } from "../../../../convex/_generated/dataModel";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { useConvexMutation } from "@convex-dev/react-query";
 
 type DeleteCustomerDialogProps = {
   open: boolean;
-  customerId: Id<"customers"> | null;
+  customerId: Id<"customers">;
   onOpenChange: (open: boolean) => void;
 };
 
@@ -24,20 +24,16 @@ export function DeleteCustomerDialog({
   customerId,
   onOpenChange,
 }: DeleteCustomerDialogProps) {
-  const [isDeleting, setIsDeleting] = useState(false);
-  const deleteCustomer = useMutation(api.customers.remove);
+  const { mutateAsync, isPending } = useMutation({
+    mutationFn: useConvexMutation(api.customers.remove),
+    onError: () => {
+      toast.error("Failed to delete customer");
+    },
+  });
 
   const handleDelete = async () => {
-    if (!customerId) return;
-    setIsDeleting(true);
-    try {
-      await deleteCustomer({ id: customerId });
-      onOpenChange(false);
-    } catch {
-      toast.error("Failed to delete customer");
-    } finally {
-      setIsDeleting(false);
-    }
+    await mutateAsync({ id: customerId });
+    onOpenChange(false);
   };
 
   return (
@@ -57,9 +53,9 @@ export function DeleteCustomerDialog({
           <Button
             variant="destructive"
             onClick={handleDelete}
-            disabled={isDeleting || !customerId}
+            disabled={isPending}
           >
-            {isDeleting ? "Deleting..." : "Delete"}
+            {isPending ? "Deleting..." : "Delete"}
           </Button>
         </DialogFooter>
       </DialogContent>

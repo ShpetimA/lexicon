@@ -14,7 +14,7 @@ export const get = userQuery({
   handler: async (ctx, args) => {
     const customer = await ctx.db.get(args.id);
     const user = await getUser(ctx);
-    if (!customer) return null;
+    if (!customer) throw new Error("Customer not found");
 
     const customerUser = await ctx.db
       .query("customerUsers")
