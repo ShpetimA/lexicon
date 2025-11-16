@@ -40,7 +40,7 @@ type TranslationKeyListProps = {
     keyName: string,
     localeId: string,
     value: string,
-  ) => void;
+  ) => Promise<{ requiresReview: boolean }>;
   searchTerm: string;
   onAddKey: () => void;
   appId: Id<"apps">;

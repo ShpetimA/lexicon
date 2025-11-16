@@ -360,6 +360,7 @@ export const bulkAutoTranslate = action({
     ),
     instructions: v.optional(v.string()),
     updatedBy: v.optional(v.id("users")),
+    keyNames: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const keysData = await ctx.runQuery(api.translations.getEditorData, {
@@ -368,7 +369,13 @@ export const bulkAutoTranslate = action({
       limit: 10000,
     });
     
-    const keys = Object.values(keysData.data).map(item => item.key);
+    let keys = Object.values(keysData.data).map(item => item.key);
+    
+    // Filter by selected key names if provided
+    if (args.keyNames && args.keyNames.length > 0) {
+      const keyNameSet = new Set(args.keyNames);
+      keys = keys.filter(key => keyNameSet.has(key.name));
+    }
     const locales = await ctx.runQuery(api.locales.list, { appId: args.appId });
     
     const sourceLocale = locales.find((l) => l._id === args.sourceLocaleId);
