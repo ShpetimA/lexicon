@@ -91,6 +91,8 @@ export default defineSchema({
     publishedBy: v.id("users"),
     publishedAt: v.number(),
     metadata: v.optional(v.string()),
+    cdnUrl: v.optional(v.string()),
+    latestUrl: v.optional(v.string()),
   })
     .index("by_app", ["appId"])
     .index("by_environment", ["environmentId"])

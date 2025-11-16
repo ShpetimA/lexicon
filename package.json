@@ -12,6 +12,7 @@
     "@ai-sdk/openai": "^2.0.67",
     "@clerk/tanstack-react-start": "^0.26.9",
     "@convex-dev/better-auth": "0.9.7",
+    "@convex-dev/r2": "^0.8.0",
     "@convex-dev/react-query": "^0.0.0-alpha.11",
     "@hookform/resolvers": "^5.2.2",
     "@mendable/firecrawl-js": "^4.5.0",

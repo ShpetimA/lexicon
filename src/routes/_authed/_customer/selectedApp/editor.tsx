@@ -9,15 +9,15 @@ import { AddKeyForm } from "./-editor/AddKeyForm";
 import { ScrapeWebsiteSheet } from "./-editor/ScrapeWebsiteSheet";
 import { BulkActionsButton } from "./-editor/BulkActionsButton";
 import { PendingReviewsDrawer } from "./-editor/PendingReviewsDrawer";
-import { useTenant } from "@/src/contexts/TenantContext";
+import { PublishDialog } from "./-editor/PublishDialog";
+import { ExportDialog } from "./-editor/ExportDialog";
 import { toast } from "sonner";
-import { Plus, Search, Globe, Clock } from "lucide-react";
+import { Plus, Search, Globe, Clock, Upload, Download } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import useDebouncedValue from "@/src/hooks/use-debounce";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useApp } from "@/src/routes/_authed/_customer/selectedApp";
-import { Pagination } from "@/components/ui/pagination";
 
 export const Route = createFileRoute("/_authed/_customer/selectedApp/editor")({
   component: TranslationEditorPage,
@@ -28,6 +28,8 @@ function TranslationEditorPage() {
   const [isAddingKey, setIsAddingKey] = useState(false);
   const [isScrapeDialogOpen, setIsScrapeDialogOpen] = useState(false);
   const [isPendingReviewsOpen, setIsPendingReviewsOpen] = useState(false);
+  const [isPublishDialogOpen, setIsPublishDialogOpen] = useState(false);
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebouncedValue(searchTerm, 300);
   const [currentPage, setCurrentPage] = useState(1);
@@ -148,6 +150,24 @@ function TranslationEditorPage() {
                   Import from Website
                 </Button>
                 <Button
+                  onClick={() => setIsExportDialogOpen(true)}
+                  size="sm"
+                  variant="outline"
+                  className="gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  Export
+                </Button>
+                <Button
+                  onClick={() => setIsPublishDialogOpen(true)}
+                  size="sm"
+                  variant="outline"
+                  className="gap-2"
+                >
+                  <Upload className="h-4 w-4" />
+                  Publish
+                </Button>
+                <Button
                   onClick={() => setIsAddingKey(true)}
                   size="sm"
                   className="gap-2"
@@ -175,13 +195,27 @@ function TranslationEditorPage() {
           />
 
           {currentUser && (
-            <PendingReviewsDrawer
-              open={isPendingReviewsOpen}
-              onOpenChange={setIsPendingReviewsOpen}
-              appId={selectedApp._id}
-              currentUserId={currentUser._id}
-            />
+            <>
+              <PendingReviewsDrawer
+                open={isPendingReviewsOpen}
+                onOpenChange={setIsPendingReviewsOpen}
+                appId={selectedApp._id}
+                currentUserId={currentUser._id}
+              />
+              <PublishDialog
+                open={isPublishDialogOpen}
+                onOpenChange={setIsPublishDialogOpen}
+                appId={selectedApp._id}
+                userId={currentUser._id}
+              />
+            </>
           )}
+
+          <ExportDialog
+            open={isExportDialogOpen}
+            onOpenChange={setIsExportDialogOpen}
+            appId={selectedApp._id}
+          />
 
           {editorData && (
             <TranslationKeyList
