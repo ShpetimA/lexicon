@@ -25,7 +25,7 @@ import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
-import Loading from "@/components/ui/loading";
+import { LoadingPage } from "@/components/ui/loading";
 
 export const Route = createFileRoute("/_authed/customers/$customerId")({
   loader: async ({ context, params }) => {
@@ -42,7 +42,7 @@ export const Route = createFileRoute("/_authed/customers/$customerId")({
     ]);
   },
   component: () => (
-    <Suspense fallback={<Loading />}>
+    <Suspense fallback={<LoadingPage />}>
       <CustomerDetailPage />
     </Suspense>
   ),

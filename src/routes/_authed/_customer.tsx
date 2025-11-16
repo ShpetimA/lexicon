@@ -3,11 +3,11 @@ import { useTenant } from "@/src/contexts/TenantContext";
 import { createFileRoute, Outlet } from "@tanstack/react-router";
 import { createContext, Suspense, useContext } from "react";
 import { AppProvider } from "./_customer/selectedApp";
-import Loading from "@/components/ui/loading";
+import { LoadingPage } from "@/components/ui/loading";
 
 export const Route = createFileRoute("/_authed/_customer")({
   component: () => (
-    <Suspense fallback={<Loading />}>
+    <Suspense fallback={<LoadingPage />}>
       <RouteComponent />
     </Suspense>
   ),

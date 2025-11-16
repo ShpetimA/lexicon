@@ -1,11 +1,19 @@
 import { Spinner } from "@/components/ui/spinner";
 
-const Loading = () => {
+const LoadingComponent = () => {
   return (
-    <div className="flex items-center justify-center h-screen">
+    <div className="flex items-center justify-center h-dvh overflow-hidden">
       <Spinner />
     </div>
   );
 };
 
-export default Loading;
+const LoadingPage = () => {
+  return (
+    <div className="flex items-center justify-center h-dvh overflow-hidden">
+      <Spinner />
+    </div>
+  );
+};
+
+export { LoadingComponent, LoadingPage };

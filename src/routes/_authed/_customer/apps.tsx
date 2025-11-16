@@ -33,11 +33,11 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { api } from "@/convex/_generated/api";
 import { Doc, Id } from "@/convex/_generated/dataModel";
 import { useCustomer } from "@/src/routes/_authed/_customer";
-import Loading from "@/components/ui/loading";
+import { LoadingPage } from "@/components/ui/loading";
 
 export const Route = createFileRoute("/_authed/_customer/apps")({
   component: () => (
-    <Suspense fallback={<Loading />}>
+    <Suspense fallback={<LoadingPage />}>
       <AppsPage />
     </Suspense>
   ),

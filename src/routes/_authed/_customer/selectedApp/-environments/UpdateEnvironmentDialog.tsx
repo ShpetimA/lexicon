@@ -9,13 +9,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useMutation } from "convex/react";
-import { api } from "../../../../convex/_generated/api";
-import type { Id } from "../../../../convex/_generated/dataModel";
+import { useMutation } from "@tanstack/react-query";
+import { useConvexMutation } from "@convex-dev/react-query";
+import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
 import { useAppForm } from "@/src/hooks/useAppForm";
 
 const environmentSchema = z.object({
-  name: z.string().min(1, "Environment name is required").max(50, "Environment name must be less than 50 characters"),
+  name: z
+    .string()
+    .min(1, "Environment name is required")
+    .max(50, "Environment name must be less than 50 characters"),
 });
 
 type Environment = {
@@ -27,33 +31,37 @@ type Environment = {
 
 type UpdateEnvironmentDialogProps = {
   open: boolean;
-  environment: Environment | null;
+  environment: Environment;
   onOpenChange: (open: boolean) => void;
 };
 
-export function UpdateEnvironmentDialog({ open, environment, onOpenChange }: UpdateEnvironmentDialogProps) {
-  const updateEnvironment = useMutation(api.environments.update);
+export function UpdateEnvironmentDialog({
+  open,
+  environment,
+  onOpenChange,
+}: UpdateEnvironmentDialogProps) {
+  const { mutateAsync } = useMutation({
+    mutationFn: useConvexMutation(api.environments.update),
+    onError: () => {
+      toast.error("Failed to update environment");
+    },
+  });
 
   const form = useAppForm({
     defaultValues: {
-      name: environment?.name ?? "",
+      name: environment.name,
     },
     validators: {
-      onChange: environmentSchema,
+      onSubmit: environmentSchema,
     },
     onSubmit: async ({ value }) => {
-      if (!environment) return;
-      try {
-        await updateEnvironment({
-          id: environment._id,
-          name: value.name,
-        });
-        toast.success("Environment updated successfully");
-        onOpenChange(false);
-        form.reset();
-      } catch {
-        toast.error("Failed to update environment");
-      }
+      await mutateAsync({
+        id: environment._id,
+        name: value.name,
+      });
+      toast.success("Environment updated successfully");
+      onOpenChange(false);
+      form.reset();
     },
   });
 
@@ -62,21 +70,16 @@ export function UpdateEnvironmentDialog({ open, environment, onOpenChange }: Upd
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit Environment</DialogTitle>
-          <DialogDescription>Update the environment settings.</DialogDescription>
+          <DialogDescription>
+            Update the environment settings.
+          </DialogDescription>
         </DialogHeader>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            form.handleSubmit();
-          }}
-          className="space-y-4"
-        >
+        <form.Form onSubmit={form.handleSubmit} className="space-y-4">
           <form.AppField name="name">
             {(field) => (
               <field.TextField
                 label="Environment Name"
                 placeholder="e.g., dev, staging, prod"
-                required
               />
             )}
           </form.AppField>
@@ -90,12 +93,13 @@ export function UpdateEnvironmentDialog({ open, environment, onOpenChange }: Upd
               Cancel
             </Button>
             <form.AppForm>
-              <form.SubmitButton loadingText="Updating...">Update</form.SubmitButton>
+              <form.SubmitButton loadingText="Updating...">
+                Update
+              </form.SubmitButton>
             </form.AppForm>
           </DialogFooter>
-        </form>
+        </form.Form>
       </DialogContent>
     </Dialog>
   );
 }
-
