@@ -19,9 +19,12 @@ import { LoadingPage } from "@/components/ui/loading";
 
 export const Route = createFileRoute("/_authed/customers/")({
   loader: async ({ context }) => {
-    await context.queryClient.ensureQueryData(
-      convexQuery(api.customers.list, {}),
-    );
+    context.queryClient
+      .ensureQueryData(convexQuery(api.customers.list, {}))
+      .catch((error) => {
+        console.error(error);
+        return [];
+      });
   },
   component: () => (
     <Suspense fallback={<LoadingPage />}>
