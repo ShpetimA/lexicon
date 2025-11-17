@@ -54,13 +54,13 @@ function CustomersPage() {
           {customers.map((customer) => {
             if (!customer._id) return null;
             return (
-              <Card
-                key={customer._id}
-                className="cursor-pointer hover:shadow-lg transition-shadow"
+              <Link
+                to="/customers/$customerId"
+                params={{ customerId: customer._id }}
               >
-                <Link
-                  to="/customers/$customerId"
-                  params={{ customerId: customer._id }}
+                <Card
+                  key={customer._id}
+                  className="cursor-pointer hover:shadow-lg transition-shadow"
                 >
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
@@ -90,8 +90,8 @@ function CustomersPage() {
                       </Button>
                     </div>
                   </CardHeader>
-                </Link>
-              </Card>
+                </Card>
+              </Link>
             );
           })}
         </div>

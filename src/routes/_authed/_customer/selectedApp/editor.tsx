@@ -6,12 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { TranslationKeyList } from "./-editor/TranslationKeyList";
 import { AddKeyForm } from "./-editor/AddKeyForm";
-import { ScrapeWebsiteSheet } from "./-editor/ScrapeWebsiteSheet";
 import { BulkActionsButton } from "./-editor/BulkActionsButton";
+import { DataActionsButton } from "./-editor/DataActionsButton";
 import { PendingReviewsDrawer } from "./-editor/PendingReviewsDrawer";
-import { PublishDialog } from "./-editor/PublishDialog";
-import { ExportDialog } from "./-editor/ExportDialog";
-import { Plus, Search, Globe, Clock, Upload, Download } from "lucide-react";
+import { Plus, Search, Clock } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import useDebouncedValue from "@/src/hooks/use-debounce";
 import { convexQuery } from "@convex-dev/react-query";
@@ -24,10 +22,7 @@ export const Route = createFileRoute("/_authed/_customer/selectedApp/editor")({
 function TranslationEditorPage() {
   const { selectedApp } = useApp();
   const [isAddingKey, setIsAddingKey] = useState(false);
-  const [isScrapeDialogOpen, setIsScrapeDialogOpen] = useState(false);
   const [isPendingReviewsOpen, setIsPendingReviewsOpen] = useState(false);
-  const [isPublishDialogOpen, setIsPublishDialogOpen] = useState(false);
-  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebouncedValue(searchTerm, 300);
   const [currentPage, setCurrentPage] = useState(1);
@@ -115,33 +110,11 @@ function TranslationEditorPage() {
                   locales={locales || []}
                   totalKeys={editorData?.pagination.total || 0}
                 />
-                <Button
-                  onClick={() => setIsScrapeDialogOpen(true)}
-                  size="sm"
-                  variant="outline"
-                  className="gap-2"
-                >
-                  <Globe className="h-4 w-4" />
-                  Import from Website
-                </Button>
-                <Button
-                  onClick={() => setIsExportDialogOpen(true)}
-                  size="sm"
-                  variant="outline"
-                  className="gap-2"
-                >
-                  <Download className="h-4 w-4" />
-                  Export
-                </Button>
-                <Button
-                  onClick={() => setIsPublishDialogOpen(true)}
-                  size="sm"
-                  variant="outline"
-                  className="gap-2"
-                >
-                  <Upload className="h-4 w-4" />
-                  Publish
-                </Button>
+                <DataActionsButton
+                  appId={selectedApp._id}
+                  locales={locales || []}
+                  currentUserId={currentUser?._id}
+                />
                 <Button
                   onClick={() => setIsAddingKey(true)}
                   size="sm"
@@ -162,33 +135,13 @@ function TranslationEditorPage() {
           )}
 
           {currentUser && (
-            <>
-              <ScrapeWebsiteSheet
-                open={isScrapeDialogOpen}
-                onOpenChange={setIsScrapeDialogOpen}
-                appId={selectedApp._id}
-                locales={locales || []}
-              />
-              <PendingReviewsDrawer
-                open={isPendingReviewsOpen}
-                onOpenChange={setIsPendingReviewsOpen}
-                appId={selectedApp._id}
-                currentUserId={currentUser._id}
-              />
-              <PublishDialog
-                open={isPublishDialogOpen}
-                onOpenChange={setIsPublishDialogOpen}
-                appId={selectedApp._id}
-                userId={currentUser._id}
-              />
-            </>
+            <PendingReviewsDrawer
+              open={isPendingReviewsOpen}
+              onOpenChange={setIsPendingReviewsOpen}
+              appId={selectedApp._id}
+              currentUserId={currentUser._id}
+            />
           )}
-
-          <ExportDialog
-            open={isExportDialogOpen}
-            onOpenChange={setIsExportDialogOpen}
-            appId={selectedApp._id}
-          />
 
           {editorData && (
             <TranslationKeyList
