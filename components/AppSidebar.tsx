@@ -66,13 +66,6 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
         disabled: !selectedApp,
         disabledTooltip: "Select an app first",
       },
-      {
-        title: "Pricing",
-        url: `/pricing`,
-        icon: CreditCard,
-        disabled: false,
-        disabledTooltip: "",
-      },
     ];
 
     return items;

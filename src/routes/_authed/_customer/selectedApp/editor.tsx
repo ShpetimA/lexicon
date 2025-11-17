@@ -11,12 +11,10 @@ import { BulkActionsButton } from "./-editor/BulkActionsButton";
 import { PendingReviewsDrawer } from "./-editor/PendingReviewsDrawer";
 import { PublishDialog } from "./-editor/PublishDialog";
 import { ExportDialog } from "./-editor/ExportDialog";
-import { toast } from "sonner";
 import { Plus, Search, Globe, Clock, Upload, Download } from "lucide-react";
 import { api } from "@/convex/_generated/api";
-import type { Id } from "@/convex/_generated/dataModel";
 import useDebouncedValue from "@/src/hooks/use-debounce";
-import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { convexQuery } from "@convex-dev/react-query";
 import { useApp } from "@/src/routes/_authed/_customer/selectedApp";
 
 export const Route = createFileRoute("/_authed/_customer/selectedApp/editor")({
@@ -56,29 +54,6 @@ function TranslationEditorPage() {
       search: debouncedSearchTerm || undefined,
     }),
   );
-
-  const createBatchWithTranslations = useConvexMutation(
-    api.translations.createBatchWithTranslations,
-  );
-
-  const handleScrapedData = async (
-    localeId: Id<"globalLocales">,
-    translations: Array<{ keyName: string; value: string }>,
-  ) => {
-    try {
-      const result = await createBatchWithTranslations({
-        appId: selectedApp._id,
-        localeId,
-        translations,
-      });
-
-      toast.success(
-        `Created ${result.keys} keys and ${result.translations} translations`,
-      );
-    } catch (error) {
-      toast.error("Failed to import translations");
-    }
-  };
 
   const keys = editorData?.data
     ? Object.values(editorData.data).map((item) => item.key)
@@ -186,16 +161,14 @@ function TranslationEditorPage() {
             />
           )}
 
-          <ScrapeWebsiteSheet
-            open={isScrapeDialogOpen}
-            onOpenChange={setIsScrapeDialogOpen}
-            appId={selectedApp._id}
-            locales={locales || []}
-            onComplete={handleScrapedData}
-          />
-
           {currentUser && (
             <>
+              <ScrapeWebsiteSheet
+                open={isScrapeDialogOpen}
+                onOpenChange={setIsScrapeDialogOpen}
+                appId={selectedApp._id}
+                locales={locales || []}
+              />
               <PendingReviewsDrawer
                 open={isPendingReviewsOpen}
                 onOpenChange={setIsPendingReviewsOpen}

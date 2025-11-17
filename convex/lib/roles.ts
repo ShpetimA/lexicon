@@ -1,13 +1,28 @@
+import { api } from "../_generated/api";
 import { Doc, Id } from "../_generated/dataModel";
-import { QueryCtx, MutationCtx } from "../_generated/server";
+import { QueryCtx, MutationCtx, ActionCtx } from "../_generated/server";
 import { authComponent } from "../auth";
 
 export type Role = "owner" | "admin" | "member";
+const isActionCtx = (
+  ctx: MutationCtx | QueryCtx | ActionCtx,
+): ctx is ActionCtx => {
+  return "runQuery" in ctx;
+};
 
-export async function getUser(ctx: MutationCtx | QueryCtx) {
+export async function getUser(ctx: MutationCtx | QueryCtx | ActionCtx) {
   const betterAuthUser = await authComponent.getAuthUser(ctx);
 
   if (!betterAuthUser) throw new Error("Authentication required");
+
+  if (isActionCtx(ctx)) {
+    const user: any = await ctx.runQuery(api.users.getUserByBetterAuthId, {
+      betterAuthUserId: betterAuthUser._id,
+    });
+
+    if (!user) throw new Error("User not found");
+    return user;
+  }
 
   let user = await ctx.db
     .query("users")

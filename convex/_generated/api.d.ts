@@ -10,7 +10,6 @@
 
 import type * as apps from "../apps.js";
 import type * as auth from "../auth.js";
-import type * as autumn from "../autumn.js";
 import type * as customerUsers from "../customerUsers.js";
 import type * as customers from "../customers.js";
 import type * as environments from "../environments.js";
@@ -23,6 +22,7 @@ import type * as lib_roles from "../lib/roles.js";
 import type * as locales from "../locales.js";
 import type * as migrate from "../migrate.js";
 import type * as publishing from "../publishing.js";
+import type * as scrapeJobs from "../scrapeJobs.js";
 import type * as seedLocales from "../seedLocales.js";
 import type * as storage from "../storage.js";
 import type * as translations from "../translations.js";
@@ -37,7 +37,6 @@ import type {
 declare const fullApi: ApiFromModules<{
   apps: typeof apps;
   auth: typeof auth;
-  autumn: typeof autumn;
   customerUsers: typeof customerUsers;
   customers: typeof customers;
   environments: typeof environments;
@@ -50,6 +49,7 @@ declare const fullApi: ApiFromModules<{
   locales: typeof locales;
   migrate: typeof migrate;
   publishing: typeof publishing;
+  scrapeJobs: typeof scrapeJobs;
   seedLocales: typeof seedLocales;
   storage: typeof storage;
   translations: typeof translations;
@@ -2182,7 +2182,6 @@ export declare const components: {
       updateMany: FunctionReference<"mutation", "internal", any, any>;
     };
   };
-  autumn: {};
   r2: {
     lib: {
       deleteMetadata: FunctionReference<

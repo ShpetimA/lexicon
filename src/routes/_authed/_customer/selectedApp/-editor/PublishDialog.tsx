@@ -48,7 +48,7 @@ export function PublishDialog({
     convexQuery(api.environments.list, { appId }),
   );
 
-  const publishAction = useConvexAction((api as any).publishing.publish);
+  const publishAction = useConvexAction(api.publishing.publish);
   const publish = useMutation({
     mutationFn: async (environmentId: Id<"environments">) => {
       return await publishAction({ appId, environmentId, userId });

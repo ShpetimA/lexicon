@@ -56,11 +56,15 @@ export const Route = createRootRouteWithContext<{
         charSet: "utf-8",
       },
       {
+        name: "description",
+        content: "Lexicon is a platform for managing translations and locales.",
+      },
+      {
         name: "viewport",
         content: "width=device-width, initial-scale=1",
       },
       {
-        title: "TanStack Start Starter",
+        title: "Lexicon",
       },
     ],
   }),

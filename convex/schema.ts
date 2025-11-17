@@ -115,7 +115,7 @@ export default defineSchema({
       v.literal("pending"),
       v.literal("approved"),
       v.literal("rejected"),
-      v.literal("cancelled")
+      v.literal("cancelled"),
     ),
     proposedValue: v.string(),
     currentValue: v.optional(v.string()),
@@ -131,4 +131,25 @@ export default defineSchema({
     .index("by_requested_by", ["requestedBy"])
     .index("by_reviewed_by", ["reviewedBy"])
     .index("by_locale", ["localeId"]),
+
+  scrapeJobs: defineTable({
+    appId: v.id("apps"),
+    userId: v.id("users"),
+    url: v.string(),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("processing"),
+      v.literal("completed"),
+      v.literal("failed"),
+    ),
+    result: v.optional(v.string()),
+    error: v.optional(v.string()),
+    startedAt: v.number(),
+    completedAt: v.optional(v.number()),
+  })
+    .index("by_app", ["appId"])
+    .index("by_user", ["userId"])
+    .index("by_app_user", ["appId", "userId"])
+    .index("by_status", ["status"])
+    .index("by_completed_at", ["completedAt"]),
 });
