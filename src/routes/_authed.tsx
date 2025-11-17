@@ -1,8 +1,9 @@
 import { redirect, createFileRoute, Outlet } from "@tanstack/react-router";
-import { Authenticated } from "convex/react";
+import { Authenticated, useConvexAuth } from "convex/react";
 import { SidebarProvider, SidebarInset } from "../../components/ui/sidebar";
 import { AppSidebar } from "../../components/AppSidebar";
 import { TenantProvider } from "../contexts/TenantContext";
+import { LoadingPage } from "@/components/ui/loading";
 
 export const Route = createFileRoute("/_authed")({
   beforeLoad: async ({ context }) => {
@@ -11,6 +12,12 @@ export const Route = createFileRoute("/_authed")({
     }
   },
   component: () => {
+    const { isLoading, isAuthenticated } = useConvexAuth();
+
+    if (isLoading || !isAuthenticated) {
+      return <LoadingPage />;
+    }
+
     return (
       <Authenticated>
         <TenantProvider>

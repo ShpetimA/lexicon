@@ -35,9 +35,9 @@ export function NavUser() {
   const handleLogout = async () => {
     try {
       await authClient.signOut();
-      clearSelectedTenant();
       queryClient.removeQueries({ queryKey: ["auth"] });
       navigate({ to: "/login" });
+      clearSelectedTenant();
     } catch (error) {
       console.error("Logout failed:", error);
     }
