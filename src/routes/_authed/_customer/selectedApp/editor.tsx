@@ -12,7 +12,7 @@ import { api } from "@/convex/_generated/api";
 import useDebouncedValue from "@/src/hooks/use-debounce";
 import { convexQuery } from "@convex-dev/react-query";
 import { useApp } from "@/src/routes/_authed/_customer/selectedApp";
-import { LoadingPage } from "@/components/ui/loading";
+import { LoadingComponent, LoadingPage } from "@/components/ui/loading";
 
 export const Route = createFileRoute("/_authed/_customer/selectedApp/editor")({
   component: () => (
@@ -128,10 +128,8 @@ function TranslationEditorPage() {
           {editorData && (
             <div className="relative h-full overflow-hidden pb-11">
               {isFetching && (
-                <div className="absolute inset-0 bg-background/50 backdrop-blur-sm z-10 flex items-center justify-center">
-                  <div className="text-sm text-muted-foreground">
-                    Loading...
-                  </div>
+                <div className="absolute inset-0 bg-background/50 backdrop-blur-xs z-10 flex items-center justify-center">
+                  <LoadingComponent />
                 </div>
               )}
               <TranslationKeyList
