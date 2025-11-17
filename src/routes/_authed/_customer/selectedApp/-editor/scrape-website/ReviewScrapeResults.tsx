@@ -91,7 +91,7 @@ export function ReviewScrapeResults({
         />
       </div>
 
-      <div className="flex flex-col gap-4 overflow-y-auto">
+      <div className="flex flex-col gap-4 overflow-hidden">
         <div className="grid gap-2">
           <Label htmlFor="locale">Target Locale</Label>
           <Select
@@ -127,7 +127,7 @@ export function ReviewScrapeResults({
           </div>
         </div>
 
-        <ScrollArea className="flex-1 -mx-6 px-6">
+        <ScrollArea className="px-6 h-full overflow-y-auto">
           <div className="space-y-3 pb-4">
             {scrapedData.map((item, index) => (
               <div
@@ -174,7 +174,7 @@ export function ReviewScrapeResults({
           </div>
         </ScrollArea>
 
-        <div className="flex gap-2 justify-end pt-4 border-t">
+        <div className="flex gap-2 justify-end p-4 border-t">
           <Button variant="outline" onClick={onBack}>
             Back
           </Button>

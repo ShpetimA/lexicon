@@ -4,11 +4,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { useConvexQuery } from "@convex-dev/react-query";
+import { convexQuery, useConvexQuery } from "@convex-dev/react-query";
 import { api } from "@/convex/_generated/api";
 import { useBulkActions } from "./context";
 import { Search } from "lucide-react";
 import type { Doc } from "@/convex/_generated/dataModel";
+import { useQuery } from "@tanstack/react-query";
+import { LoadingComponent } from "@/components/ui/loading";
 
 export function KeySelectionStep() {
   const {
@@ -23,11 +25,13 @@ export function KeySelectionStep() {
 
   const [searchTerm, setSearchTerm] = useState("");
 
-  const editorData = useConvexQuery(api.translations.getEditorData, {
-    appId,
-    page: 1,
-    limit: 1000,
-    search: "",
+  const { data: editorData, isLoading } = useQuery({
+    ...convexQuery(api.translations.getEditorData, {
+      appId,
+      page: 1,
+      limit: 1000,
+      search: "",
+    }),
   });
 
   const keys: Doc<"keys">[] = useMemo(() => {
@@ -53,11 +57,10 @@ export function KeySelectionStep() {
         if (!keyData) return true;
 
         const translations = keyData.translations;
-        
-        // Check if any target locale is missing a translation
+
         return Array.from(targetLocaleIds).some((targetLocaleId) => {
           const targetTranslation = translations.find(
-            (t: any) => t.localeId === targetLocaleId
+            (t: any) => t.localeId === targetLocaleId,
           );
           return !targetTranslation?.value;
         });
@@ -145,58 +148,64 @@ export function KeySelectionStep() {
       </div>
 
       <div className="space-y-2 h-full overflow-y-auto pb-40">
-        {filteredKeys.map((key: Doc<"keys">) => {
-          const keyInfo = getKeyStatus(key.name);
-          if (!keyInfo) return null;
+        {isLoading ? (
+          <LoadingComponent />
+        ) : (
+          filteredKeys.map((key: Doc<"keys">) => {
+            const keyInfo = getKeyStatus(key.name);
+            if (!keyInfo) return null;
 
-          const { status, sourceText } = keyInfo;
+            const { status, sourceText } = keyInfo;
 
-          return (
-            <div
-              key={key._id}
-              className="flex items-start space-x-3 space-y-0 rounded-md border p-3 hover:bg-accent/50"
-            >
-              <Checkbox
-                id={`key-${key._id}`}
-                checked={selectedKeys.has(key.name)}
-                onCheckedChange={() => handleToggleKey(key.name)}
-                disabled={status === "no-source"}
-                className="mt-1"
-              />
-              <Label
-                htmlFor={`key-${key._id}`}
-                className="flex-1 cursor-pointer"
+            return (
+              <div
+                key={key._id}
+                className="flex items-start space-x-3 space-y-0 rounded-md border p-3 hover:bg-accent/50"
               >
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{key.name}</span>
-                    {status === "no-source" && (
-                      <Badge variant="destructive" className="text-xs">
-                        No {sourceLocale?.code} translation
-                      </Badge>
+                <Checkbox
+                  id={`key-${key._id}`}
+                  checked={selectedKeys.has(key.name)}
+                  onCheckedChange={() => handleToggleKey(key.name)}
+                  disabled={status === "no-source"}
+                  className="mt-1"
+                />
+                <Label
+                  htmlFor={`key-${key._id}`}
+                  className="flex-1 cursor-pointer"
+                >
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{key.name}</span>
+                      {status === "no-source" && (
+                        <Badge variant="destructive" className="text-xs">
+                          No {sourceLocale?.code} translation
+                        </Badge>
+                      )}
+                      {status === "missing" && actionType === "fillMissing" && (
+                        <Badge variant="secondary" className="text-xs">
+                          Missing translations
+                        </Badge>
+                      )}
+                    </div>
+                    {sourceText && (
+                      <div className="text-sm text-muted-foreground mt-1">
+                        <span className="font-medium">
+                          {sourceLocale?.code}:
+                        </span>{" "}
+                        {sourceText}
+                      </div>
                     )}
-                    {status === "missing" && actionType === "fillMissing" && (
-                      <Badge variant="secondary" className="text-xs">
-                        Missing translations
-                      </Badge>
+                    {key.description && (
+                      <div className="text-xs text-muted-foreground italic">
+                        {key.description}
+                      </div>
                     )}
                   </div>
-                  {sourceText && (
-                    <div className="text-sm text-muted-foreground mt-1">
-                      <span className="font-medium">{sourceLocale?.code}:</span>{" "}
-                      {sourceText}
-                    </div>
-                  )}
-                  {key.description && (
-                    <div className="text-xs text-muted-foreground italic">
-                      {key.description}
-                    </div>
-                  )}
-                </div>
-              </Label>
-            </div>
-          );
-        })}
+                </Label>
+              </div>
+            );
+          })
+        )}
 
         {filteredKeys.length === 0 && (
           <div className="text-center py-8 text-muted-foreground">

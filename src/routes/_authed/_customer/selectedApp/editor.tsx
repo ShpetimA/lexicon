@@ -126,7 +126,7 @@ function TranslationEditorPage() {
           )}
 
           {editorData && (
-            <div className="relative">
+            <div className="relative h-full overflow-hidden pb-11">
               {isFetching && (
                 <div className="absolute inset-0 bg-background/50 backdrop-blur-sm z-10 flex items-center justify-center">
                   <div className="text-sm text-muted-foreground">
