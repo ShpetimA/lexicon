@@ -83,7 +83,7 @@ function SignUpPage() {
   });
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-neutral-950 p-4">
+    <div className="flex min-h-screen items-center justify-center bg-linear-to-t from-blue-200 to-slate-100 p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Create Account</CardTitle>
