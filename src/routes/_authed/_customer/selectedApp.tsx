@@ -14,9 +14,7 @@ function RouteComponent() {
     return <div>No app selected</div>;
   }
 
-  return (
-      <Outlet />
-  );
+  return <Outlet />;
 }
 
 type AppContextType = {

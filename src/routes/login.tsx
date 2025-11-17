@@ -18,6 +18,8 @@ import {
 import { Alert, AlertDescription } from "../../components/ui/alert";
 import { z } from "zod";
 import { useAppForm } from "@/src/hooks/useAppForm";
+import { useQueryClient } from "@tanstack/react-query";
+import { BookOpen } from "lucide-react";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -29,13 +31,14 @@ export const Route = createFileRoute("/login")({
 });
 
 const loginSchema = z.object({
-  email: z.string().email("Invalid email address"),
+  email: z.email("Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
 function LoginPage() {
   const navigate = useNavigate();
   const [error, setError] = useState("");
+  const queryClient = useQueryClient();
 
   const form = useAppForm({
     defaultValues: {
@@ -43,7 +46,7 @@ function LoginPage() {
       password: "",
     },
     validators: {
-      onChange: loginSchema,
+      onSubmit: loginSchema,
     },
     onSubmit: async ({ value }) => {
       try {
@@ -51,13 +54,14 @@ function LoginPage() {
           email: value.email,
           password: value.password,
         });
+        queryClient.removeQueries({ queryKey: ["auth"] });
 
         if (result.error) {
           setError(result.error.message || "Sign in failed");
           return;
         }
 
-        navigate({ to: "/editor" });
+        navigate({ to: "/customers" });
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
       }
@@ -65,10 +69,15 @@ function LoginPage() {
   });
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-neutral-950 p-4">
+    <div className="flex min-h-screen items-center justify-center bg-linear-to-t from-blue-200 to-slate-100 p-4">
       <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Sign In</CardTitle>
+        <CardHeader className="space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10">
+              <BookOpen className="h-5 w-5 text-blue-500" />
+            </div>
+            <CardTitle>Sign In</CardTitle>
+          </div>
           <CardDescription>
             Enter your credentials to access your account
           </CardDescription>

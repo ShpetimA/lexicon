@@ -17,8 +17,9 @@ import {
 import { z } from "zod";
 import { useAppForm } from "@/src/hooks/useAppForm";
 import { toast } from "sonner";
-import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useConvexMutation } from "@convex-dev/react-query";
 
 export const Route = createFileRoute("/signup")({
   component: SignUpPage,
@@ -37,7 +38,13 @@ const signUpSchema = z.object({
 
 function SignUpPage() {
   const navigate = useNavigate();
-  const syncUser = useMutation(api.users.syncUser);
+  const { mutateAsync: syncUser } = useMutation({
+    mutationFn: useConvexMutation(api.users.syncUser),
+    onError: () => {
+      toast.error("Failed to sync user");
+    },
+  });
+  const queryClient = useQueryClient();
 
   const form = useAppForm({
     defaultValues: {
@@ -46,7 +53,7 @@ function SignUpPage() {
       password: "",
     },
     validators: {
-      onChange: signUpSchema,
+      onSubmit: signUpSchema,
     },
     onSubmit: async ({ value }) => {
       try {
@@ -67,6 +74,7 @@ function SignUpPage() {
           name: data.user.name,
         });
 
+        queryClient.removeQueries({ queryKey: ["auth"] });
         navigate({ to: "/customers" });
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "An error occurred");
@@ -75,7 +83,7 @@ function SignUpPage() {
   });
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-neutral-950 p-4">
+    <div className="flex min-h-screen items-center justify-center bg-linear-to-t from-blue-200 to-slate-100 p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Create Account</CardTitle>

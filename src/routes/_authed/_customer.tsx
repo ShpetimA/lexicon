@@ -1,11 +1,16 @@
 import { Doc } from "@/convex/_generated/dataModel";
 import { useTenant } from "@/src/contexts/TenantContext";
 import { createFileRoute, Outlet } from "@tanstack/react-router";
-import { createContext, useContext } from "react";
+import { createContext, Suspense, useContext } from "react";
 import { AppProvider } from "./_customer/selectedApp";
+import { LoadingPage } from "@/components/ui/loading";
 
 export const Route = createFileRoute("/_authed/_customer")({
-  component: RouteComponent,
+  component: () => (
+    <Suspense fallback={<LoadingPage />}>
+      <RouteComponent />
+    </Suspense>
+  ),
 });
 
 function RouteComponent() {

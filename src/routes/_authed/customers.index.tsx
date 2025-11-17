@@ -1,0 +1,138 @@
+import { Suspense, useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Plus, Building2, Calendar, Trash2 } from "lucide-react";
+import { CreateCustomerDialog } from "./-customers/CreateCustomerDialog";
+import { DeleteCustomerDialog } from "./-customers/DeleteCustomerDialog";
+import { convexQuery } from "@convex-dev/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
+import { LoadingPage } from "@/components/ui/loading";
+
+export const Route = createFileRoute("/_authed/customers/")({
+  component: () => (
+    <Suspense fallback={<LoadingPage />}>
+      <CustomersPage />
+    </Suspense>
+  ),
+});
+
+function CustomersPage() {
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [deleteCustomerId, setDeleteCustomerId] =
+    useState<Id<"customers"> | null>(null);
+  const { data: customers } = useSuspenseQuery(
+    convexQuery(api.customers.list, {}),
+  );
+
+  return (
+    <div className="container mx-auto py-8 px-4 space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">Organizations</h1>
+          <p className="text-muted-foreground">
+            Manage your organizations and their apps
+          </p>
+        </div>
+        <Button onClick={() => setIsCreateDialogOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Create Organization
+        </Button>
+      </div>
+      {customers.length === 0 ? (
+        <EmptyCustomers onCreate={() => setIsCreateDialogOpen(true)} />
+      ) : (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {customers.map((customer) => {
+            if (!customer._id) return null;
+            return (
+              <Link
+                to="/customers/$customerId"
+                params={{ customerId: customer._id }}
+              >
+                <Card
+                  key={customer._id}
+                  className="cursor-pointer hover:shadow-lg transition-shadow"
+                >
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle className="text-lg">
+                          {customer.name}
+                        </CardTitle>
+                        <CardDescription className="flex items-center gap-2 mt-1">
+                          <Calendar className="h-4 w-4" />
+                          Created{" "}
+                          {customer.createdAt
+                            ? new Date(customer.createdAt).toLocaleDateString()
+                            : "Unknown"}
+                        </CardDescription>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        type="button"
+                        size="sm"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setDeleteCustomerId(customer._id ?? null);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </CardHeader>
+                </Card>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+
+      {deleteCustomerId && (
+        <DeleteCustomerDialog
+          open={true}
+          customerId={deleteCustomerId}
+          onOpenChange={(open) => {
+            if (!open) setDeleteCustomerId(null);
+          }}
+        />
+      )}
+      <CreateCustomerDialog
+        open={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
+      />
+    </div>
+  );
+}
+
+type EmptyCustomersProps = {
+  onCreate: () => void;
+};
+
+const EmptyCustomers = ({ onCreate }: EmptyCustomersProps) => {
+  return (
+    <Card>
+      <CardContent className="flex flex-col items-center justify-center py-12">
+        <Building2 className="h-12 w-12 text-muted-foreground mb-4" />
+        <h3 className="text-lg font-semibold mb-2">No organizations yet</h3>
+        <p className="text-muted-foreground text-center mb-4">
+          Create your first organization to start organizing your apps and
+          translations.
+        </p>
+        <Button onClick={onCreate}>
+          <Plus className="h-4 w-4 mr-2" />
+          Create Organization
+        </Button>
+      </CardContent>
+    </Card>
+  );
+};

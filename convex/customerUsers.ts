@@ -17,13 +17,7 @@ export const list = userQuery({
         const user = await ctx.db.get(customerUser.userId);
         return {
           ...customerUser,
-          user: user
-            ? {
-                _id: user._id,
-                email: user.email,
-                name: user.name,
-              }
-            : null,
+          user: user ? { name: user.name, email: user.email } : null,
         };
       }),
     );
@@ -116,5 +110,32 @@ export const remove = userMutation({
 
     await ctx.db.delete(customerUser._id);
     return customerUser._id;
+  },
+});
+
+export const countByCustomer = userQuery({
+  args: { customerId: v.id("customers") },
+  handler: async (ctx, args) => {
+    const customerUsers = await ctx.db
+      .query("customerUsers")
+      .withIndex("by_customer", (q) => q.eq("customerId", args.customerId))
+      .collect();
+
+    return customerUsers.length;
+  },
+});
+
+export const getByCustomerAndUser = userQuery({
+  args: {
+    customerId: v.id("customers"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("customerUsers")
+      .withIndex("by_customer_user", (q) =>
+        q.eq("customerId", args.customerId).eq("userId", args.userId),
+      )
+      .first();
   },
 });

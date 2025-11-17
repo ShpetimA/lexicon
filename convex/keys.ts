@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { userQuery, userMutation } from "./lib/auth";
 import { requireAppAccess } from "./lib/roles";
 import { paginationOptsValidator } from "convex/server";
+import type { Id } from "./_generated/dataModel";
 
 export const list = userQuery({
   args: {
@@ -103,5 +104,41 @@ export const remove = userMutation({
 
     await ctx.db.delete(args.id);
     return args.id;
+  },
+});
+
+export const createBatch = userMutation({
+  args: {
+    appId: v.id("apps"),
+    keys: v.array(
+      v.object({
+        name: v.string(),
+        description: v.optional(v.string()),
+      }),
+    ),
+  },
+  handler: async (ctx, args) => {
+    await requireAppAccess(ctx, args.appId, ["owner", "admin"]);
+
+    const keyIds: Id<"keys">[] = [];
+    for (const key of args.keys) {
+      const existingKey = await ctx.db
+        .query("keys")
+        .withIndex("by_name_app", (q) =>
+          q.eq("name", key.name).eq("appId", args.appId),
+        )
+        .first();
+
+      if (!existingKey) {
+        const keyId = await ctx.db.insert("keys", {
+          name: key.name,
+          description: key.description,
+          appId: args.appId,
+          createdAt: Date.now(),
+        });
+        keyIds.push(keyId);
+      }
+    }
+    return keyIds;
   },
 });

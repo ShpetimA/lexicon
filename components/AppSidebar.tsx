@@ -1,5 +1,11 @@
 import { useMemo } from "react";
-import { Globe, Edit3, Smartphone, Users, Server } from "lucide-react";
+import {
+  Globe,
+  Edit3,
+  Smartphone,
+  Users,
+  Server,
+} from "lucide-react";
 import { NavMain } from "./NavMain";
 import { NavUser } from "./NavUser";
 import { TenantSwitcher } from "./TenantSwitcher";
@@ -47,14 +53,14 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
       },
       {
         title: "Environments",
-        url: selectedApp ? `/environments` : "#",
+        url: selectedApp ? `/selectedApp/environments` : "#",
         icon: Server,
         disabled: !selectedApp,
         disabledTooltip: "Select an app first",
       },
       {
         title: "Editor",
-        url: selectedApp ? `/editor` : "#",
+        url: selectedApp ? `/selectedApp/editor` : "#",
         icon: Edit3,
         disabled: !selectedApp,
         disabledTooltip: "Select an app first",

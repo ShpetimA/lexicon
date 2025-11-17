@@ -27,7 +27,12 @@ export function TenantSwitcher() {
   const { data: customers = [] } = useQuery(convexQuery(api.customers.list, {}));
 
   const handleSelectCustomer = (customer: typeof customers[0]) => {
-    setSelectedCustomer(customer);
+    if (!customer._id || !customer.name || !customer.createdAt) return;
+    setSelectedCustomer({
+      _id: customer._id,
+      name: customer.name,
+      createdAt: customer.createdAt,
+    });
   };
 
   const handleManageCustomers = () => {

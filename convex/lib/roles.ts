@@ -1,13 +1,29 @@
+import { api } from "../_generated/api";
 import { Doc, Id } from "../_generated/dataModel";
-import { QueryCtx, MutationCtx } from "../_generated/server";
+import { QueryCtx, MutationCtx, ActionCtx } from "../_generated/server";
 import { authComponent } from "../auth";
 
 export type Role = "owner" | "admin" | "member";
+const isActionCtx = (
+  ctx: MutationCtx | QueryCtx | ActionCtx,
+): ctx is ActionCtx => {
+  return "runQuery" in ctx;
+};
 
-export async function getUser(ctx: MutationCtx | QueryCtx) {
+
+export async function getUser(ctx: MutationCtx | QueryCtx | ActionCtx) {
   const betterAuthUser = await authComponent.getAuthUser(ctx);
 
   if (!betterAuthUser) throw new Error("Authentication required");
+
+  if (isActionCtx(ctx)) {
+    const user = (await ctx.runQuery(api.users.getUserByBetterAuthId, {
+      betterAuthUserId: betterAuthUser._id,
+    })) as Doc<"users"> | null;
+
+    if (!user) throw new Error("User not found");
+    return user;
+  }
 
   let user = await ctx.db
     .query("users")
@@ -87,4 +103,24 @@ export async function requireAppAccess(
 
   const appWithCustomerId = app;
   return await requireRole(ctx, appWithCustomerId.customerId, allowedRoles);
+}
+
+export async function requireAppAccessAction(
+  ctx: ActionCtx,
+  appId: Id<"apps">,
+  allowedRoles: Role[],
+) {
+  const user = await getUser(ctx);
+  const app = await ctx.runQuery(api.apps.get, { id: appId });
+  if (!app) throw new Error("App not found");
+
+  const customerUser = await ctx.runQuery(api.customerUsers.getByCustomerAndUser, {
+    customerId: app.customerId,
+    userId: user._id,
+  });
+
+  if (!customerUser || !allowedRoles.includes(customerUser.role)) {
+    throw new Error("Unauthorized: Insufficient permissions");
+  }
+  return customerUser;
 }

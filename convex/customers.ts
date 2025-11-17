@@ -13,12 +13,13 @@ export const get = userQuery({
   args: { id: v.id("customers") },
   handler: async (ctx, args) => {
     const customer = await ctx.db.get(args.id);
-    if (!customer) return null;
+    const user = await getUser(ctx);
+    if (!customer) throw new Error("Customer not found");
 
     const customerUser = await ctx.db
       .query("customerUsers")
       .withIndex("by_customer_user", (q) =>
-        q.eq("customerId", args.id).eq("userId", ctx.user._id as any),
+        q.eq("customerId", args.id).eq("userId", user._id),
       )
       .first();
 

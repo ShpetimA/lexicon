@@ -1,4 +1,4 @@
-import { QueryClient } from "@tanstack/react-query";
+import { QueryClient, queryOptions } from "@tanstack/react-query";
 import {
   createRootRouteWithContext,
   useRouteContext,
@@ -12,21 +12,36 @@ import { createServerFn } from "@tanstack/react-start";
 import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
 import {
   getCookieName,
-  getAuthFromCookie,
+  fetchSession,
 } from "@convex-dev/better-auth/react-start";
 import { authClient } from "../lib/auth-client";
 import { getCookie } from "@tanstack/react-start/server";
-import { createAuth } from "@/convex/auth";
+import { Toaster } from "sonner";
+import { getRequest } from "@tanstack/react-start/server";
 
-const fetchAuth = createServerFn({ method: "GET" }).handler(async () => {
-  const sessionCookieName = getCookieName(createAuth);
-  const token = getCookie(sessionCookieName);
-  const authClient = getAuthFromCookie(token);
+export const authQueryOptions = queryOptions({
+  queryKey: ["auth"],
+  queryFn: () => fetchAuth(),
+});
 
-  return {
-    userId: authClient?.userId,
-    token,
-  };
+export const fetchAuth = createServerFn({ method: "GET" }).handler(async () => {
+  try {
+    const { createAuth } = await import("../../convex/auth");
+    const request = getRequest();
+    const { session } = await fetchSession(request);
+    const sessionCookieName = getCookieName(createAuth);
+    const token = getCookie(sessionCookieName);
+
+    return {
+      session,
+      token,
+    };
+  } catch (error) {
+    return {
+      session: null,
+      token: null,
+    };
+  }
 });
 
 export const Route = createRootRouteWithContext<{
@@ -35,32 +50,36 @@ export const Route = createRootRouteWithContext<{
   convexQueryClient: ConvexQueryClient;
 }>()({
   head: () => ({
-    links: [{ rel: "stylesheet", href: appCss }],
+    links: [
+      { rel: "stylesheet", href: appCss },
+      { rel: "icon", href: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%233b82f6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z'/><path d='M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z'/></svg>" },
+    ],
     meta: [
       {
         charSet: "utf-8",
+      },
+      {
+        name: "description",
+        content: "Lexicon is a platform for managing translations and locales.",
       },
       {
         name: "viewport",
         content: "width=device-width, initial-scale=1",
       },
       {
-        title: "TanStack Start Starter",
+        title: "Lexicon",
       },
     ],
   }),
   beforeLoad: async (ctx) => {
-    // all queries, mutations and action made with TanStack Query will be
-    // authenticated by an identity token.
-    const { userId, token } = await fetchAuth();
+    const { session, token } =
+      await ctx.context.queryClient.ensureQueryData(authQueryOptions);
 
-    // During SSR only (the only time serverHttpClient exists),
-    // set the auth token to make HTTP queries with.
     if (token) {
       ctx.context.convexQueryClient.serverHttpClient?.setAuth(token);
     }
 
-    return { userId, token };
+    return { userId: session?.user.id, token };
   },
   errorComponent: () => <div>Error</div>,
   notFoundComponent: () => <div>Not Found</div>,
@@ -91,6 +110,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
       <body>
         {children}
         <Scripts />
+        <Toaster />
       </body>
     </html>
   );
