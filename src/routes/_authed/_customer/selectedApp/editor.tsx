@@ -1,19 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Suspense, useState } from "react";
-import {
-  useQuery,
-  useSuspenseQueries,
-  useSuspenseQuery,
-} from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { TranslationKeyList } from "./-editor/TranslationKeyList";
-import { AddKeyForm } from "./-editor/AddKeyForm";
+import { AddKeyForm } from "./-editor/translation-key/AddKeyForm";
 import { BulkActionsButton } from "./-editor/BulkActionsButton";
 import { DataActionsButton } from "./-editor/DataActionsButton";
-import { PendingReviewsDrawer } from "./-editor/PendingReviewsDrawer";
-import { Plus, Search, Clock } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import useDebouncedValue from "@/src/hooks/use-debounce";
 import { convexQuery } from "@convex-dev/react-query";
@@ -31,7 +25,6 @@ export const Route = createFileRoute("/_authed/_customer/selectedApp/editor")({
 function TranslationEditorPage() {
   const { selectedApp } = useApp();
   const [isAddingKey, setIsAddingKey] = useState(false);
-  const [isPendingReviewsOpen, setIsPendingReviewsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebouncedValue(searchTerm, 300);
   const [currentPage, setCurrentPage] = useState(1);
@@ -60,7 +53,9 @@ function TranslationEditorPage() {
   );
 
   const keys = editorData?.data
-    ? Object.values(editorData.data).map((item) => item.key)
+    ? Object.values(editorData.data)
+        .map((item) => item.key)
+        .sort((a, b) => b.createdAt - a.createdAt)
     : [];
 
   const reviewMap =
@@ -100,20 +95,6 @@ function TranslationEditorPage() {
                 />
               </div>
               <div className="flex gap-2 ml-auto">
-                {(pendingReviews?.length || 0) > 0 && (
-                  <Button
-                    onClick={() => setIsPendingReviewsOpen(true)}
-                    size="sm"
-                    variant="outline"
-                    className="gap-2"
-                  >
-                    <Clock className="h-4 w-4" />
-                    Pending Reviews
-                    <Badge variant="secondary" className="ml-1">
-                      {pendingReviews?.length}
-                    </Badge>
-                  </Button>
-                )}
                 <BulkActionsButton
                   appId={selectedApp._id}
                   locales={locales || []}
@@ -140,14 +121,6 @@ function TranslationEditorPage() {
             <AddKeyForm
               onCreated={() => setIsAddingKey(false)}
               onCancel={() => setIsAddingKey(false)}
-            />
-          )}
-
-          {currentUser && (
-            <PendingReviewsDrawer
-              open={isPendingReviewsOpen}
-              onOpenChange={setIsPendingReviewsOpen}
-              currentUserId={currentUser?._id}
             />
           )}
 

@@ -9,10 +9,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { useMutation } from "convex/react";
+import { useMutation } from "@tanstack/react-query";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
-import { useState } from "react";
+import { useConvexMutation } from "@convex-dev/react-query";
 
 type Key = {
   _id: Id<"keys">;
@@ -33,21 +33,17 @@ export function DeleteTranslationKeyDialog({
   translationKey,
   onOpenChange,
 }: DeleteTranslationKeyDialogProps) {
-  const deleteKey = useMutation(api.keys.remove);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const { mutateAsync, isPending } = useMutation({
+    mutationFn: useConvexMutation(api.keys.remove),
+    onError: () => {
+      toast.error("Failed to delete key");
+    },
+  });
 
   const handleDelete = async () => {
-    setIsDeleting(true);
-    try {
-      await deleteKey({ id: translationKey._id });
-      toast.success("Key deleted successfully");
-      onOpenChange(false);
-    } catch (error) {
-      toast.error("Failed to delete key");
-      console.error("Delete key error:", error);
-    } finally {
-      setIsDeleting(false);
-    }
+    await mutateAsync({ id: translationKey._id });
+    toast.success("Key deleted successfully");
+    onOpenChange(false);
   };
 
   return (
@@ -57,18 +53,18 @@ export function DeleteTranslationKeyDialog({
           <AlertDialogTitle>Delete Translation Key</AlertDialogTitle>
           <AlertDialogDescription>
             Are you sure you want to delete the key "{translationKey.name}"?
-            This action will also delete all associated translations and
-            cannot be undone.
+            This action will also delete all associated translations and cannot
+            be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleDelete}
-            disabled={isDeleting}
+            disabled={isPending}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            {isDeleting ? "Deleting..." : "Delete Key"}
+            {isPending ? "Deleting..." : "Delete Key"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

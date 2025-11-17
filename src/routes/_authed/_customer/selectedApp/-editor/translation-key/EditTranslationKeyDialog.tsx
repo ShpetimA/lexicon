@@ -8,11 +8,11 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { useMutation } from "convex/react";
+import { useMutation } from "@tanstack/react-query";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
-import { useEffect } from "react";
 import { useAppForm } from "@/src/hooks/useAppForm";
+import { useConvexMutation } from "@convex-dev/react-query";
 
 const keySchema = z.object({
   name: z.string().min(1, "Key ID is required"),
@@ -38,7 +38,12 @@ export function EditTranslationKeyDialog({
   translationKey,
   onOpenChange,
 }: EditTranslationKeyDialogProps) {
-  const updateKey = useMutation(api.keys.update);
+  const { mutateAsync } = useMutation({
+    mutationFn: useConvexMutation(api.keys.update),
+    onError: () => {
+      toast.error("Failed to update key");
+    },
+  });
 
   const form = useAppForm({
     defaultValues: {
@@ -49,19 +54,14 @@ export function EditTranslationKeyDialog({
       onChange: keySchema,
     },
     onSubmit: async ({ value }) => {
-      try {
-        await updateKey({
-          id: translationKey._id,
-          name: value.name.trim(),
-          description: value.description?.trim() || undefined,
-        });
+      await mutateAsync({
+        id: translationKey._id,
+        name: value.name.trim(),
+        description: value.description?.trim() || undefined,
+      });
 
-        toast.success("Key updated successfully");
-        onOpenChange(false);
-      } catch (error) {
-        toast.error("Failed to update key");
-        console.error("Update key error:", error);
-      }
+      toast.success("Key updated successfully");
+      onOpenChange(false);
     },
   });
 
@@ -103,7 +103,9 @@ export function EditTranslationKeyDialog({
               Cancel
             </Button>
             <form.AppForm>
-              <form.SubmitButton loadingText="Updating...">Update Key</form.SubmitButton>
+              <form.SubmitButton loadingText="Updating...">
+                Update Key
+              </form.SubmitButton>
             </form.AppForm>
           </DialogFooter>
         </form>

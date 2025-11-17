@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import type { Id } from "@/convex/_generated/dataModel";
 import { useBulkActions } from "./context";
-import LocaleCheckbox from "@/src/routes/_authed/_customer/selectedApp/-editor/BulkActionsDrawer/components/LocaleCheckbox";
+import LocaleCheckbox from "./components/LocaleCheckbox";
 
 export function TargetLocalesStep() {
   const { locales, sourceLocaleId, targetLocaleIds, setTargetLocaleIds } =

@@ -2,8 +2,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Edit2, Trash2 } from "lucide-react";
 import type { Id } from "@/convex/_generated/dataModel";
-import { EditTranslationKeyDialog } from "./EditTranslationKeyDialog";
-import { DeleteTranslationKeyDialog } from "./DeleteTranslationKeyDialog";
+import { EditTranslationKeyDialog } from "./translation-key/EditTranslationKeyDialog";
+import { DeleteTranslationKeyDialog } from "./translation-key/DeleteTranslationKeyDialog";
 
 type Key = {
   _id: Id<"keys">;

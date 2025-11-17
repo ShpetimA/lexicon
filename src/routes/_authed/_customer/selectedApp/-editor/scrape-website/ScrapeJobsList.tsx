@@ -3,7 +3,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2 } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
-import { ScrapeStatusBadge } from "@/src/routes/_authed/_customer/selectedApp/-editor/ScrapeStatusBadge";
+import { ScrapeStatusBadge } from "./ScrapeStatusBadge";
 import { useQuery } from "@tanstack/react-query";
 import { convexQuery } from "@convex-dev/react-query";
 

@@ -1,6 +1,6 @@
 import { LocaleTranslationRow } from "./LocaleTranslationRow";
 import { TranslationKeyActions } from "./TranslationKeyActions";
-import { AutoTranslateButton } from "./AutoTranslateButton";
+import { AutoTranslateButton } from "./auto-translate/AutoTranslateButton";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
 
 type Key = {

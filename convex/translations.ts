@@ -86,6 +86,9 @@ export const getEditorData = query({
 
     let allKeys = await keysQuery.collect();
 
+    // Sort by createdAt descending (newest first)
+    allKeys.sort((a, b) => b.createdAt - a.createdAt);
+
     if (args.search) {
       allKeys = allKeys.filter((key) =>
         key.name.toLowerCase().includes(args.search!.toLowerCase()),

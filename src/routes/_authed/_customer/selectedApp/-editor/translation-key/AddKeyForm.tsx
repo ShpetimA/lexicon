@@ -2,9 +2,10 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useTenant } from "@/src/contexts/TenantContext";
-import { useMutation } from "convex/react";
+import { useMutation } from "@tanstack/react-query";
 import { api } from "@/convex/_generated/api";
 import { useAppForm } from "@/src/hooks/useAppForm";
+import { useConvexMutation } from "@convex-dev/react-query";
 
 const keySchema = z.object({
   name: z.string().min(1, "Key ID is required"),
@@ -18,7 +19,12 @@ type AddKeyFormProps = {
 
 export function AddKeyForm({ onCreated, onCancel }: AddKeyFormProps) {
   const { selectedApp } = useTenant();
-  const createKey = useMutation(api.keys.create);
+  const { mutateAsync } = useMutation({
+    mutationFn: useConvexMutation(api.keys.create),
+    onError: () => {
+      toast.error("Failed to add key");
+    },
+  });
 
   const form = useAppForm({
     defaultValues: {
@@ -33,20 +39,14 @@ export function AddKeyForm({ onCreated, onCancel }: AddKeyFormProps) {
         toast.error("No app selected");
         return;
       }
-      try {
-        await createKey({
-          appId: selectedApp._id,
-          name: value.name.trim(),
-          description: value.description?.trim() || undefined,
-        });
-        toast.success("Key added successfully");
-        form.reset();
-        onCreated();
-      } catch {
-        toast.error("Failed to add key", {
-          description: "Please try again later",
-        });
-      }
+      await mutateAsync({
+        appId: selectedApp._id,
+        name: value.name.trim(),
+        description: value.description?.trim() || undefined,
+      });
+      toast.success("Key added successfully");
+      form.reset();
+      onCreated();
     },
   });
 
@@ -63,11 +63,7 @@ export function AddKeyForm({ onCreated, onCancel }: AddKeyFormProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <form.AppField name="name">
             {(field) => (
-              <field.TextField
-                label="Key ID"
-                placeholder="Key ID"
-                required
-              />
+              <field.TextField label="Key ID" placeholder="Key ID" required />
             )}
           </form.AppField>
 
@@ -85,7 +81,9 @@ export function AddKeyForm({ onCreated, onCancel }: AddKeyFormProps) {
 
         <div className="flex space-x-2">
           <form.AppForm>
-            <form.SubmitButton loadingText="Adding...">Add Key</form.SubmitButton>
+            <form.SubmitButton loadingText="Adding...">
+              Add Key
+            </form.SubmitButton>
           </form.AppForm>
           <Button variant="outline" type="button" onClick={onCancel}>
             Cancel
@@ -95,4 +93,3 @@ export function AddKeyForm({ onCreated, onCancel }: AddKeyFormProps) {
     </div>
   );
 }
-

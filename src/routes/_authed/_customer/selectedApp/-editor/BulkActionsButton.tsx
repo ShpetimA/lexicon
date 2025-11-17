@@ -8,7 +8,7 @@ import {
 import { Sparkles, Languages, Copy } from "lucide-react";
 import type { Id } from "@/convex/_generated/dataModel";
 import { useState } from "react";
-import { BulkActionsDrawer, type BulkActionType } from "./BulkActionsDrawer";
+import { BulkActionsDrawer, type BulkActionType } from "./bulk-actions/index";
 
 type Locale = {
   _id: Id<"globalLocales">;

@@ -1,1 +1,0 @@
-export { BulkActionsDrawer, type BulkActionType } from "./BulkActionsDrawer/index";

@@ -6,7 +6,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useConvexAction, convexQuery } from "@convex-dev/react-query";
 import { useAppForm } from "@/src/hooks/useAppForm";
 import { z } from "zod";
-import { ScrapeStatusBadge } from "@/src/routes/_authed/_customer/selectedApp/-editor/ScrapeStatusBadge";
+import { ScrapeStatusBadge } from "./ScrapeStatusBadge";
 
 interface NewScrapeFormProps {
   appId: Id<"apps">;

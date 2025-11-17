@@ -8,10 +8,10 @@ import {
 import { Globe, Upload, Download, Database, FileJson } from "lucide-react";
 import type { Id } from "@/convex/_generated/dataModel";
 import { useState } from "react";
-import { ScrapeWebsiteSheet } from "./ScrapeWebsiteSheet";
-import { PublishDialog } from "./PublishDialog";
-import { ExportDialog } from "./ExportDialog";
-import { ImportJsonDialog } from "./ImportJsonDialog";
+import { ScrapeWebsiteSheet } from "./scrape-website/ScrapeWebsiteSheet";
+import { PublishDialog } from "./data-actions/PublishDialog";
+import { ExportDialog } from "./data-actions/ExportDialog";
+import { ImportJsonDialog } from "./data-actions/ImportJsonDialog";
 
 type Locale = {
   _id: Id<"globalLocales">;

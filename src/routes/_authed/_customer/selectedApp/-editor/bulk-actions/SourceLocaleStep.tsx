@@ -1,9 +1,8 @@
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
+import { RadioGroup } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import type { Id } from "@/convex/_generated/dataModel";
 import { useBulkActions } from "./context";
-import LocaleRadioButton from "@/src/routes/_authed/_customer/selectedApp/-editor/BulkActionsDrawer/components/LocaleRadioButton";
+import LocaleRadioButton from "./components/LocaleRadioButton";
 
 export function SourceLocaleStep() {
   const { locales, sourceLocaleId, setSourceLocaleId } = useBulkActions();

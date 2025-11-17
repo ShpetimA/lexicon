@@ -38,20 +38,22 @@ export function PublishDialog({
 }: PublishDialogProps) {
   const [selectedEnvironment, setSelectedEnvironment] =
     useState<Id<"environments"> | null>(null);
-  const [publishedResult, setPublishedResult] = useState<{
-    version: number;
-    cdnUrl: string;
-    latestUrl: string;
-  } | null>(null);
 
   const { data: environments } = useQuery(
     convexQuery(api.environments.list, { appId }),
   );
 
   const publishAction = useConvexAction(api.publishing.publish);
-  const publish = useMutation({
+  const {
+    mutateAsync,
+    data: publishedResult,
+    isPending,
+  } = useMutation({
     mutationFn: async (environmentId: Id<"environments">) => {
-      return await publishAction({ appId, environmentId, userId });
+      return publishAction({ appId, environmentId, userId });
+    },
+    onError: () => {
+      toast.error("Failed to publish");
     },
   });
 
@@ -61,24 +63,7 @@ export function PublishDialog({
       return;
     }
 
-    publish.mutate(selectedEnvironment, {
-      onSuccess: (result) => {
-        toast.success(
-          `Published version ${result.version} to environment successfully!`,
-        );
-        setPublishedResult({
-          version: result.version,
-          cdnUrl: result.cdnUrl,
-          latestUrl: result.latestUrl,
-        });
-      },
-      onError: (error) => {
-        console.error("Publish error:", error);
-        toast.error(
-          error instanceof Error ? error.message : "Failed to publish",
-        );
-      },
-    });
+    await mutateAsync(selectedEnvironment);
   };
 
   return (
@@ -197,7 +182,6 @@ export function PublishDialog({
             <Button
               onClick={() => {
                 onOpenChange(false);
-                setPublishedResult(null);
                 setSelectedEnvironment(null);
               }}
             >
@@ -216,11 +200,9 @@ export function PublishDialog({
               </Button>
               <Button
                 onClick={handlePublish}
-                disabled={!selectedEnvironment || publish.isPending}
+                disabled={!selectedEnvironment || isPending}
               >
-                {publish.isPending && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
+                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Publish
               </Button>
             </>
