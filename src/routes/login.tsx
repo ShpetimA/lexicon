@@ -18,6 +18,7 @@ import {
 import { Alert, AlertDescription } from "../../components/ui/alert";
 import { z } from "zod";
 import { useAppForm } from "@/src/hooks/useAppForm";
+import { useQueryClient } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -36,6 +37,7 @@ const loginSchema = z.object({
 function LoginPage() {
   const navigate = useNavigate();
   const [error, setError] = useState("");
+  const queryClient = useQueryClient();
 
   const form = useAppForm({
     defaultValues: {
@@ -51,6 +53,7 @@ function LoginPage() {
           email: value.email,
           password: value.password,
         });
+        queryClient.removeQueries({ queryKey: ["auth"] });
 
         if (result.error) {
           setError(result.error.message || "Sign in failed");

@@ -15,7 +15,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "./ui/sidebar";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@/convex/_generated/api";
 import { authClient } from "@/src/lib/auth-client";
@@ -26,6 +26,7 @@ export function NavUser() {
   const navigate = useNavigate();
   const { clearSelectedTenant } = useTenant();
   const { data: user } = useQuery(convexQuery(api.auth.getCurrentUser, {}));
+  const queryClient = useQueryClient();
 
   if (!user) {
     return null;
@@ -35,6 +36,7 @@ export function NavUser() {
     try {
       await authClient.signOut();
       clearSelectedTenant();
+      queryClient.removeQueries({ queryKey: ["auth"] });
       navigate({ to: "/login" });
     } catch (error) {
       console.error("Logout failed:", error);

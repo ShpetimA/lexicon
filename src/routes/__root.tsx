@@ -1,4 +1,4 @@
-import { QueryClient } from "@tanstack/react-query";
+import { QueryClient, queryOptions } from "@tanstack/react-query";
 import {
   createRootRouteWithContext,
   useRouteContext,
@@ -12,22 +12,28 @@ import { createServerFn } from "@tanstack/react-start";
 import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
 import {
   getCookieName,
-  getAuthFromCookie,
+  fetchSession,
 } from "@convex-dev/better-auth/react-start";
 import { authClient } from "../lib/auth-client";
 import { getCookie } from "@tanstack/react-start/server";
-import { createAuth } from "@/convex/auth";
-import { AutumnProvider } from "autumn-js/react";
 import { AutumnWrapper } from "@/src/contexts/AutumnProvider";
 import { Toaster } from "sonner";
+import { getRequest } from "@tanstack/react-start/server";
 
-const fetchAuth = createServerFn({ method: "GET" }).handler(async () => {
+export const authQueryOptions = queryOptions({
+  queryKey: ["auth"],
+  queryFn: () => fetchAuth(),
+});
+
+export const fetchAuth = createServerFn({ method: "GET" }).handler(async () => {
+  const { createAuth } = await import("../../convex/auth");
+  const request = getRequest();
+  const { session } = await fetchSession(request);
   const sessionCookieName = getCookieName(createAuth);
   const token = getCookie(sessionCookieName);
-  const authClient = getAuthFromCookie(token);
 
   return {
-    userId: authClient?.userId,
+    session,
     token,
   };
 });
@@ -53,17 +59,13 @@ export const Route = createRootRouteWithContext<{
     ],
   }),
   beforeLoad: async (ctx) => {
-    // all queries, mutations and action made with TanStack Query will be
-    // authenticated by an identity token.
-    const { userId, token } = await fetchAuth();
+    const { session, token } = await ctx.context.queryClient.ensureQueryData(authQueryOptions);
 
-    // During SSR only (the only time serverHttpClient exists),
-    // set the auth token to make HTTP queries with.
     if (token) {
       ctx.context.convexQueryClient.serverHttpClient?.setAuth(token);
     }
 
-    return { userId, token };
+    return { userId: session?.user.id, token };
   },
   errorComponent: () => <div>Error</div>,
   notFoundComponent: () => <div>Not Found</div>,

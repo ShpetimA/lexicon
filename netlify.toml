@@ -1,3 +1,6 @@
 [build]
   command = "npx convex deploy --cmd 'vite build'"
   publish = "dist/client"
+[dev]
+command = "vite dev"
+port = 3000
