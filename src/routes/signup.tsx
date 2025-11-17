@@ -19,6 +19,7 @@ import { useAppForm } from "@/src/hooks/useAppForm";
 import { toast } from "sonner";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import { useQueryClient } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/signup")({
   component: SignUpPage,
@@ -38,6 +39,7 @@ const signUpSchema = z.object({
 function SignUpPage() {
   const navigate = useNavigate();
   const syncUser = useMutation(api.users.syncUser);
+  const queryClient = useQueryClient();
 
   const form = useAppForm({
     defaultValues: {
@@ -67,6 +69,7 @@ function SignUpPage() {
           name: data.user.name,
         });
 
+        queryClient.removeQueries({ queryKey: ["auth"] });
         navigate({ to: "/customers" });
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "An error occurred");
