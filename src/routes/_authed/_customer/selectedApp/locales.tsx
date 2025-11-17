@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,12 +29,13 @@ import { CreateLocaleDialog } from "./-locales/CreateLocaleDialog";
 import { UpdateLocaleDialog } from "./-locales/UpdateLocaleDialog";
 import { DeleteLocaleDialog } from "./-locales/DeleteLocaleDialog";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { useApp } from "@/src/routes/_authed/_customer/selectedApp";
 import { useCustomer } from "@/src/routes/_authed/_customer";
 import { toast } from "sonner";
+import { LoadingPage } from "@/components/ui/loading";
 
 export const Route = createFileRoute("/_authed/_customer/selectedApp/locales")({
   component: RouteComponent,
@@ -42,9 +43,11 @@ export const Route = createFileRoute("/_authed/_customer/selectedApp/locales")({
 
 function RouteComponent() {
   return (
-    <div className="container px-4 mx-auto py-8">
-      <LocalesPage />
-    </div>
+    <Suspense fallback={<LoadingPage />}>
+      <div className="container px-4 mx-auto py-8">
+        <LocalesPage />
+      </div>
+    </Suspense>
   );
 }
 
@@ -64,27 +67,17 @@ function LocalesPage() {
   const { selectedCustomer } = useCustomer();
   const { selectedApp } = useApp();
 
-  const { data: locales, isLoading } = useQuery({
+  const { data: locales } = useSuspenseQuery({
     ...convexQuery(api.locales.list, {
       appId: selectedApp._id,
     }),
-    enabled: !!selectedApp,
   });
 
-  const { data: userCount } = useQuery({
+  const { data: userCount } = useSuspenseQuery({
     ...convexQuery(api.locales.getUserCount, {
       appId: selectedApp._id,
     }),
-    enabled: !!selectedApp,
   });
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-muted-foreground">Loading locales...</div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">

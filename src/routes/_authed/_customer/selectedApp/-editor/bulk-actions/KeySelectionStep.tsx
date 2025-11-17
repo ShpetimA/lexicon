@@ -18,6 +18,7 @@ export function KeySelectionStep() {
     actionType,
     sourceLocaleId,
     locales,
+    targetLocaleIds,
   } = useBulkActions();
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -52,9 +53,14 @@ export function KeySelectionStep() {
         if (!keyData) return true;
 
         const translations = keyData.translations;
-        return (
-          translations.length === 0 || translations.some((t: any) => !t.value)
-        );
+        
+        // Check if any target locale is missing a translation
+        return Array.from(targetLocaleIds).some((targetLocaleId) => {
+          const targetTranslation = translations.find(
+            (t: any) => t.localeId === targetLocaleId
+          );
+          return !targetTranslation?.value;
+        });
       });
     }
 

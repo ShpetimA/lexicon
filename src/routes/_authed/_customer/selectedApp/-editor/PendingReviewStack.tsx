@@ -92,17 +92,14 @@ const ReviewCard = ({ review }: { review: Review }) => {
 
   const approveReviewMutation = async () => {
     await approveReview({ reviewId: review._id });
-    toast.success("Review approved");
   };
 
   const rejectReviewMutation = async () => {
     await rejectReview({ reviewId: review._id });
-    toast.success("Review rejected");
   };
 
   const cancelReviewMutation = async () => {
     await cancelReview({ reviewId: review._id });
-    toast.success("Review cancelled");
   };
 
   return (

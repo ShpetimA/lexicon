@@ -43,14 +43,15 @@ function TranslationEditorPage() {
     convexQuery(api.locales.list, { appId: selectedApp._id }),
   );
 
-  const { data: editorData } = useQuery(
-    convexQuery(api.translations.getEditorData, {
+  const { data: editorData, isFetching } = useQuery({
+    ...convexQuery(api.translations.getEditorData, {
       appId: selectedApp._id,
       page: currentPage,
       limit: 10,
       search: debouncedSearchTerm || undefined,
     }),
-  );
+    placeholderData: (previousData) => previousData,
+  });
 
   const keys = editorData?.data
     ? Object.values(editorData.data)
@@ -125,15 +126,24 @@ function TranslationEditorPage() {
           )}
 
           {editorData && (
-            <TranslationKeyList
-              keys={keys}
-              locales={locales || []}
-              editorData={editorData}
-              filteredLocales={locales || []}
-              searchTerm={searchTerm}
-              onAddKey={() => setIsAddingKey(true)}
-              reviewMap={reviewMap}
-            />
+            <div className="relative">
+              {isFetching && (
+                <div className="absolute inset-0 bg-background/50 backdrop-blur-sm z-10 flex items-center justify-center">
+                  <div className="text-sm text-muted-foreground">
+                    Loading...
+                  </div>
+                </div>
+              )}
+              <TranslationKeyList
+                keys={keys}
+                locales={locales || []}
+                editorData={editorData}
+                filteredLocales={locales || []}
+                searchTerm={searchTerm}
+                onAddKey={() => setIsAddingKey(true)}
+                reviewMap={reviewMap}
+              />
+            </div>
           )}
         </div>
         {editorData?.pagination && editorData.pagination.totalPages > 1 && (
