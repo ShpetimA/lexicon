@@ -1,4 +1,3 @@
-
 import { ChevronsUpDown, Plus, Smartphone } from "lucide-react";
 import {
   DropdownMenu,
@@ -19,22 +18,12 @@ import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../convex/_generated/api";
 import { useNavigate } from "@tanstack/react-router";
+import { Id } from "@/convex/_generated/dataModel";
 
 export default function AppSwitcher() {
   const { isMobile } = useSidebar();
-  const { selectedCustomer, selectedApp, setSelectedApp } = useTenant();
+  const { selectedCustomer, selectedApp } = useTenant();
   const navigate = useNavigate();
-
-  const { data: apps = [] } = useQuery({
-    ...convexQuery(api.apps.list, {
-      customerId: selectedCustomer?._id ?? ("0" as any),
-    }),
-    enabled: !!selectedCustomer,
-  });
-
-  const handleSelectApp = (app: typeof apps[0]) => {
-    setSelectedApp(app);
-  };
 
   const handleManageApps = () => {
     navigate({ to: "/apps" });
@@ -50,7 +39,9 @@ export default function AppSwitcher() {
             </div>
             <div className="grid flex-1 text-left text-sm leading-tight">
               <span className="truncate font-semibold">Select App</span>
-              <span className="truncate text-xs">Choose organization first</span>
+              <span className="truncate text-xs">
+                Choose organization first
+              </span>
             </div>
           </SidebarMenuButton>
         </SidebarMenuItem>
@@ -87,37 +78,65 @@ export default function AppSwitcher() {
             side={isMobile ? "bottom" : "right"}
             sideOffset={4}
           >
-            <DropdownMenuLabel className="text-xs text-muted-foreground">
-              Apps
-            </DropdownMenuLabel>
-            {apps.length === 0 ? (
-              <DropdownMenuItem disabled className="gap-2 p-2">
-                <div className="text-muted-foreground text-sm">No apps yet</div>
-              </DropdownMenuItem>
-            ) : (
-              apps.map((app) => (
-                <DropdownMenuItem
-                  key={app._id}
-                  onClick={() => handleSelectApp(app)}
-                  className="gap-2 p-2"
-                >
-                  <div className="flex size-6 items-center justify-center rounded-sm border">
-                    <Smartphone className="size-4 shrink-0" />
-                  </div>
-                  {app.name}
-                </DropdownMenuItem>
-              ))
-            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleManageApps} className="gap-2 p-2">
               <div className="flex size-6 items-center justify-center rounded-md border bg-background">
                 <Plus className="size-4" />
               </div>
-              <div className="font-medium text-muted-foreground">Manage Apps</div>
+              <div className="font-medium text-muted-foreground">
+                Manage Apps
+              </div>
             </DropdownMenuItem>
+            {selectedCustomer && (
+              <AppSwitcherContent customerId={selectedCustomer._id} />
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
     </SidebarMenu>
   );
 }
+
+const AppSwitcherContent = ({
+  customerId,
+}: {
+  customerId: Id<"customers">;
+}) => {
+  const { setSelectedApp } = useTenant();
+
+  const { data: apps = [] } = useQuery({
+    ...convexQuery(api.apps.list, {
+      customerId: customerId,
+    }),
+  });
+
+  const handleSelectApp = (app: (typeof apps)[0]) => {
+    setSelectedApp(app);
+  };
+
+  return (
+    <>
+      <DropdownMenuLabel className="text-xs text-muted-foreground">
+        Apps
+      </DropdownMenuLabel>
+      {apps.length === 0 ? (
+        <DropdownMenuItem disabled className="gap-2 p-2">
+          <div className="text-muted-foreground text-sm">No apps yet</div>
+        </DropdownMenuItem>
+      ) : (
+        apps.map((app) => (
+          <DropdownMenuItem
+            key={app._id}
+            onClick={() => handleSelectApp(app)}
+            className="gap-2 p-2"
+          >
+            <div className="flex size-6 items-center justify-center rounded-sm border">
+              <Smartphone className="size-4 shrink-0" />
+            </div>
+            {app.name}
+          </DropdownMenuItem>
+        ))
+      )}
+    </>
+  );
+};

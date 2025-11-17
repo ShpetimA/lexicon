@@ -26,16 +26,23 @@ export const authQueryOptions = queryOptions({
 });
 
 export const fetchAuth = createServerFn({ method: "GET" }).handler(async () => {
-  const { createAuth } = await import("../../convex/auth");
-  const request = getRequest();
-  const { session } = await fetchSession(request);
-  const sessionCookieName = getCookieName(createAuth);
-  const token = getCookie(sessionCookieName);
+  try {
+    const { createAuth } = await import("../../convex/auth");
+    const request = getRequest();
+    const { session } = await fetchSession(request);
+    const sessionCookieName = getCookieName(createAuth);
+    const token = getCookie(sessionCookieName);
 
-  return {
-    session,
-    token,
-  };
+    return {
+      session,
+      token,
+    };
+  } catch (error) {
+    return {
+      session: null,
+      token: null,
+    };
+  }
 });
 
 export const Route = createRootRouteWithContext<{
@@ -59,7 +66,8 @@ export const Route = createRootRouteWithContext<{
     ],
   }),
   beforeLoad: async (ctx) => {
-    const { session, token } = await ctx.context.queryClient.ensureQueryData(authQueryOptions);
+    const { session, token } =
+      await ctx.context.queryClient.ensureQueryData(authQueryOptions);
 
     if (token) {
       ctx.context.convexQueryClient.serverHttpClient?.setAuth(token);
