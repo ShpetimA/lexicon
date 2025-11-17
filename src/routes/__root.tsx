@@ -16,7 +16,6 @@ import {
 } from "@convex-dev/better-auth/react-start";
 import { authClient } from "../lib/auth-client";
 import { getCookie } from "@tanstack/react-start/server";
-import { AutumnWrapper } from "@/src/contexts/AutumnProvider";
 import { Toaster } from "sonner";
 import { getRequest } from "@tanstack/react-start/server";
 
@@ -88,11 +87,9 @@ function Root() {
       client={context.convexClient}
       authClient={authClient}
     >
-      <AutumnWrapper>
-        <RootDocument>
-          <Outlet />
-        </RootDocument>
-      </AutumnWrapper>
+      <RootDocument>
+        <Outlet />
+      </RootDocument>
     </ConvexBetterAuthProvider>
   );
 }

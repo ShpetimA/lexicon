@@ -18,14 +18,6 @@ import { Id } from "@/convex/_generated/dataModel";
 import { LoadingPage } from "@/components/ui/loading";
 
 export const Route = createFileRoute("/_authed/customers/")({
-  loader: async ({ context }) => {
-    context.queryClient
-      .ensureQueryData(convexQuery(api.customers.list, {}))
-      .catch((error) => {
-        console.error(error);
-        return [];
-      });
-  },
   component: () => (
     <Suspense fallback={<LoadingPage />}>
       <CustomersPage />

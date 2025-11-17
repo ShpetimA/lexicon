@@ -13,7 +13,6 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthedPricingRouteImport } from './routes/_authed/pricing'
 import { Route as AuthedCustomerRouteImport } from './routes/_authed/_customer'
 import { Route as AuthedCustomersIndexRouteImport } from './routes/_authed/customers.index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
@@ -42,11 +41,6 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
-} as any)
-const AuthedPricingRoute = AuthedPricingRouteImport.update({
-  id: '/pricing',
-  path: '/pricing',
-  getParentRoute: () => AuthedRoute,
 } as any)
 const AuthedCustomerRoute = AuthedCustomerRouteImport.update({
   id: '/_customer',
@@ -102,7 +96,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
-  '/pricing': typeof AuthedPricingRoute
   '/apps': typeof AuthedCustomerAppsRoute
   '/selectedApp': typeof AuthedCustomerSelectedAppRouteWithChildren
   '/customers/$customerId': typeof AuthedCustomersCustomerIdRoute
@@ -116,7 +109,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
-  '/pricing': typeof AuthedPricingRoute
   '/apps': typeof AuthedCustomerAppsRoute
   '/selectedApp': typeof AuthedCustomerSelectedAppRouteWithChildren
   '/customers/$customerId': typeof AuthedCustomersCustomerIdRoute
@@ -133,7 +125,6 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/_authed/_customer': typeof AuthedCustomerRouteWithChildren
-  '/_authed/pricing': typeof AuthedPricingRoute
   '/_authed/_customer/apps': typeof AuthedCustomerAppsRoute
   '/_authed/_customer/selectedApp': typeof AuthedCustomerSelectedAppRouteWithChildren
   '/_authed/customers/$customerId': typeof AuthedCustomersCustomerIdRoute
@@ -149,7 +140,6 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/signup'
-    | '/pricing'
     | '/apps'
     | '/selectedApp'
     | '/customers/$customerId'
@@ -163,7 +153,6 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/signup'
-    | '/pricing'
     | '/apps'
     | '/selectedApp'
     | '/customers/$customerId'
@@ -179,7 +168,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/_authed/_customer'
-    | '/_authed/pricing'
     | '/_authed/_customer/apps'
     | '/_authed/_customer/selectedApp'
     | '/_authed/customers/$customerId'
@@ -227,13 +215,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/_authed/pricing': {
-      id: '/_authed/pricing'
-      path: '/pricing'
-      fullPath: '/pricing'
-      preLoaderRoute: typeof AuthedPricingRouteImport
-      parentRoute: typeof AuthedRoute
     }
     '/_authed/_customer': {
       id: '/_authed/_customer'
@@ -337,14 +318,12 @@ const AuthedCustomerRouteWithChildren = AuthedCustomerRoute._addFileChildren(
 
 interface AuthedRouteChildren {
   AuthedCustomerRoute: typeof AuthedCustomerRouteWithChildren
-  AuthedPricingRoute: typeof AuthedPricingRoute
   AuthedCustomersCustomerIdRoute: typeof AuthedCustomersCustomerIdRoute
   AuthedCustomersIndexRoute: typeof AuthedCustomersIndexRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedCustomerRoute: AuthedCustomerRouteWithChildren,
-  AuthedPricingRoute: AuthedPricingRoute,
   AuthedCustomersCustomerIdRoute: AuthedCustomersCustomerIdRoute,
   AuthedCustomersIndexRoute: AuthedCustomersIndexRoute,
 }
