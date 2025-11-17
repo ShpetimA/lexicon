@@ -82,8 +82,7 @@ export function KeySelectionStep() {
   const getKeyStatus = (keyName: string) => {
     if (!editorData?.data) return null;
     const keyData = editorData.data[keyName];
-    if (!keyData)
-      return { status: "missing" as const, sourceText: null as string | null };
+    if (!keyData) return { status: "missing", sourceText: null };
 
     const sourceTranslation = keyData.translations.find(
       (t: any) => t.localeId === sourceLocaleId,
@@ -91,19 +90,19 @@ export function KeySelectionStep() {
 
     if (!sourceTranslation?.value) {
       return {
-        status: "no-source" as const,
-        sourceText: null as string | null,
+        status: "no-source",
+        sourceText: null,
       };
     }
 
     return {
-      status: "ready" as const,
-      sourceText: sourceTranslation.value as string,
+      status: "ready",
+      sourceText: sourceTranslation.value,
     };
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 h-full overflow-hidden">
       <div className="flex gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -139,7 +138,7 @@ export function KeySelectionStep() {
         {selectedKeys.size} of {filteredKeys.length} keys selected
       </div>
 
-      <div className="space-y-2 max-h-96 overflow-y-auto">
+      <div className="space-y-2 h-full overflow-y-auto pb-40">
         {filteredKeys.map((key: Doc<"keys">) => {
           const keyInfo = getKeyStatus(key.name);
           if (!keyInfo) return null;

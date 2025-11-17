@@ -2,9 +2,9 @@ import { Button } from "@/components/ui/button";
 import { Check, X, Clock, Loader2 } from "lucide-react";
 import type { Id } from "@/convex/_generated/dataModel";
 import { api } from "@/convex/_generated/api";
-import { useConvexMutation } from "@convex-dev/react-query";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { toast } from "sonner";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   Accordion,
   AccordionItem,
@@ -23,13 +23,9 @@ interface Review {
 
 interface PendingReviewStackProps {
   reviews: Review[];
-  currentUserId?: Id<"users">;
 }
 
-export function PendingReviewStack({
-  reviews,
-  currentUserId,
-}: PendingReviewStackProps) {
+export function PendingReviewStack({ reviews }: PendingReviewStackProps) {
   const sortedReviews = [...reviews].sort(
     (a, b) => a.requestedAt - b.requestedAt,
   );
@@ -49,13 +45,7 @@ export function PendingReviewStack({
           <AccordionContent className="px-4 py-3">
             <div className="space-y-2">
               {sortedReviews.map((review) => {
-                return (
-                  <ReviewCard
-                    key={review._id}
-                    review={review}
-                    userId={currentUserId!}
-                  />
-                );
+                return <ReviewCard key={review._id} review={review} />;
               })}
             </div>
           </AccordionContent>
@@ -65,13 +55,10 @@ export function PendingReviewStack({
   );
 }
 
-const ReviewCard = ({
-  review,
-  userId,
-}: {
-  review: Review;
-  userId: Id<"users">;
-}) => {
+const ReviewCard = ({ review }: { review: Review }) => {
+  const { data: currentUser } = useQuery(
+    convexQuery(api.users.getCurrentUserRecord, {}),
+  );
   const { mutateAsync: approveReview, isPending: isApproveLoading } =
     useMutation({
       mutationFn: useConvexMutation(api.translations.approveReview),
@@ -101,20 +88,20 @@ const ReviewCard = ({
       },
     },
   );
-  const isOwnReview = review.requestedBy?._id === userId;
+  const isOwnReview = review.requestedBy?._id === currentUser?._id;
 
   const approveReviewMutation = async () => {
-    await approveReview({ reviewId: review._id, reviewedBy: userId });
+    await approveReview({ reviewId: review._id });
     toast.success("Review approved");
   };
 
   const rejectReviewMutation = async () => {
-    await rejectReview({ reviewId: review._id, reviewedBy: userId });
+    await rejectReview({ reviewId: review._id });
     toast.success("Review rejected");
   };
 
   const cancelReviewMutation = async () => {
-    await cancelReview({ reviewId: review._id, userId });
+    await cancelReview({ reviewId: review._id });
     toast.success("Review cancelled");
   };
 

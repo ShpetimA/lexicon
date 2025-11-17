@@ -1,11 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import type { Id } from "@/convex/_generated/dataModel";
 import { useBulkActions } from "./context";
+import LocaleCheckbox from "@/src/routes/_authed/_customer/selectedApp/-editor/BulkActionsDrawer/components/LocaleCheckbox";
 
 export function TargetLocalesStep() {
-  const { locales, sourceLocaleId, targetLocaleIds, setTargetLocaleIds } = useBulkActions();
+  const { locales, sourceLocaleId, targetLocaleIds, setTargetLocaleIds } =
+    useBulkActions();
 
   const handleToggleTarget = (localeId: Id<"globalLocales">) => {
     const newSet = new Set(targetLocaleIds);
@@ -52,22 +52,18 @@ export function TargetLocalesStep() {
         {locales
           .filter((l) => l._id !== sourceLocaleId)
           .map((locale) => (
-            <div
+            <LocaleCheckbox
               key={locale._id}
-              className="flex items-center space-x-3 space-y-0 rounded-md border p-4 hover:bg-accent/50"
-            >
-              <Checkbox
-                id={`target-${locale._id}`}
-                checked={targetLocaleIds.has(locale._id)}
-                onCheckedChange={() => handleToggleTarget(locale._id)}
-              />
-              <Label
-                htmlFor={`target-${locale._id}`}
-                className="flex-1 cursor-pointer"
-              >
-                <span className="font-medium">{locale.code}</span>
-              </Label>
-            </div>
+              labelProps={{
+                htmlFor: `target-${locale._id}`,
+                children: <span className="font-medium">{locale.code}</span>,
+              }}
+              checkboxProps={{
+                id: `target-${locale._id}`,
+                checked: targetLocaleIds.has(locale._id),
+                onCheckedChange: () => handleToggleTarget(locale._id),
+              }}
+            />
           ))}
       </div>
     </div>

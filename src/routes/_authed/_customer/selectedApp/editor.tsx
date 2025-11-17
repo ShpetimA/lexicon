@@ -1,6 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { Suspense, useState } from "react";
+import {
+  useQuery,
+  useSuspenseQueries,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -14,9 +18,14 @@ import { api } from "@/convex/_generated/api";
 import useDebouncedValue from "@/src/hooks/use-debounce";
 import { convexQuery } from "@convex-dev/react-query";
 import { useApp } from "@/src/routes/_authed/_customer/selectedApp";
+import { LoadingPage } from "@/components/ui/loading";
 
 export const Route = createFileRoute("/_authed/_customer/selectedApp/editor")({
-  component: TranslationEditorPage,
+  component: () => (
+    <Suspense fallback={<LoadingPage />}>
+      <TranslationEditorPage />
+    </Suspense>
+  ),
 });
 
 function TranslationEditorPage() {
@@ -27,17 +36,17 @@ function TranslationEditorPage() {
   const debouncedSearchTerm = useDebouncedValue(searchTerm, 300);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const { data: currentUser } = useQuery(
+  const { data: currentUser } = useSuspenseQuery(
     convexQuery(api.users.getCurrentUserRecord, {}),
   );
 
-  const { data: pendingReviews } = useQuery(
+  const { data: pendingReviews } = useSuspenseQuery(
     convexQuery(api.translations.listPendingReviews, {
       appId: selectedApp._id,
     }),
   );
 
-  const { data: locales } = useQuery(
+  const { data: locales } = useSuspenseQuery(
     convexQuery(api.locales.list, { appId: selectedApp._id }),
   );
 
@@ -138,8 +147,7 @@ function TranslationEditorPage() {
             <PendingReviewsDrawer
               open={isPendingReviewsOpen}
               onOpenChange={setIsPendingReviewsOpen}
-              appId={selectedApp._id}
-              currentUserId={currentUser._id}
+              currentUserId={currentUser?._id}
             />
           )}
 
@@ -151,9 +159,7 @@ function TranslationEditorPage() {
               filteredLocales={locales || []}
               searchTerm={searchTerm}
               onAddKey={() => setIsAddingKey(true)}
-              appId={selectedApp._id}
               reviewMap={reviewMap}
-              currentUserId={currentUser?._id}
             />
           )}
         </div>

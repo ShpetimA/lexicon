@@ -3,44 +3,33 @@ import type { Id } from "@/convex/_generated/dataModel";
 import type { BulkActionType, StepType, Locale, BulkResult } from "./types";
 
 interface BulkActionsContextValue {
-  // Step navigation
   step: StepType;
   setStep: (step: StepType) => void;
-  
-  // Action type
+
   actionType: BulkActionType | null;
   setActionType: (type: BulkActionType | null) => void;
-  
-  // Locales
+
   locales: Locale[];
   sourceLocaleId: Id<"globalLocales"> | null;
   setSourceLocaleId: (id: Id<"globalLocales"> | null) => void;
-  
-  // Target locales (for translate actions)
+
   targetLocaleIds: Set<Id<"globalLocales">>;
   setTargetLocaleIds: (ids: Set<Id<"globalLocales">>) => void;
-  
-  // Copy target (for copy action)
+
   copyTargetLocaleId: Id<"globalLocales"> | null;
   setCopyTargetLocaleId: (id: Id<"globalLocales"> | null) => void;
-  
-  // Instructions
+
   instructions: string;
   setInstructions: (instructions: string) => void;
-  
-  // Key selection
+
   selectedKeys: Set<string>;
   setSelectedKeys: (keys: Set<string>) => void;
-  
-  // Processing
+
   isProcessing: boolean;
   setIsProcessing: (processing: boolean) => void;
-  progress: number;
-  setProgress: (progress: number) => void;
   results: BulkResult[];
   setResults: (results: BulkResult[]) => void;
-  
-  // Other
+
   appId: Id<"apps">;
   totalKeys: number;
 }
@@ -70,19 +59,24 @@ export function BulkActionsProvider({
   totalKeys,
   initialAction,
 }: BulkActionsProviderProps) {
-  const [step, setStep] = useState<StepType>(initialAction ? "source" : "action");
-  const [actionType, setActionType] = useState<BulkActionType | null>(initialAction);
-  const [sourceLocaleId, setSourceLocaleId] = useState<Id<"globalLocales"> | null>(
-    () => locales.find((l) => l.isDefault)?._id ?? null
+  const [step, setStep] = useState<StepType>(
+    initialAction ? "source" : "action",
   );
-  const [targetLocaleIds, setTargetLocaleIds] = useState<Set<Id<"globalLocales">>>(
-    new Set()
+  const [actionType, setActionType] = useState<BulkActionType | null>(
+    initialAction,
   );
-  const [copyTargetLocaleId, setCopyTargetLocaleId] = useState<Id<"globalLocales"> | null>(null);
+  const [sourceLocaleId, setSourceLocaleId] =
+    useState<Id<"globalLocales"> | null>(
+      () => locales.find((l) => l.isDefault)?._id ?? null,
+    );
+  const [targetLocaleIds, setTargetLocaleIds] = useState<
+    Set<Id<"globalLocales">>
+  >(new Set());
+  const [copyTargetLocaleId, setCopyTargetLocaleId] =
+    useState<Id<"globalLocales"> | null>(null);
   const [instructions, setInstructions] = useState("");
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
   const [isProcessing, setIsProcessing] = useState(false);
-  const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<BulkResult[]>([]);
 
   const value: BulkActionsContextValue = {
@@ -103,8 +97,6 @@ export function BulkActionsProvider({
     setSelectedKeys,
     isProcessing,
     setIsProcessing,
-    progress,
-    setProgress,
     results,
     setResults,
     appId,

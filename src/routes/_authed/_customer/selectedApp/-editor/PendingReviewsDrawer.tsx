@@ -14,11 +14,11 @@ import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { toast } from "sonner";
 import { Check, X, Clock } from "lucide-react";
+import { useApp } from "@/src/routes/_authed/_customer/selectedApp";
 
 interface PendingReviewsDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  appId: Id<"apps">;
   localeId?: Id<"globalLocales">;
   currentUserId: Id<"users">;
 }
@@ -26,10 +26,10 @@ interface PendingReviewsDrawerProps {
 export function PendingReviewsDrawer({
   open,
   onOpenChange,
-  appId,
   localeId,
   currentUserId,
 }: PendingReviewsDrawerProps) {
+  const appId = useApp().selectedApp._id;
   const { data: reviews } = useQuery({
     ...convexQuery(api.translations.listPendingReviews, {
       appId,
@@ -44,7 +44,7 @@ export function PendingReviewsDrawer({
 
   const handleApprove = async (reviewId: Id<"translationReviews">) => {
     try {
-      await approveReview({ reviewId, reviewedBy: currentUserId });
+      await approveReview({ reviewId });
       toast.success("Review approved");
     } catch (error) {
       toast.error(
@@ -55,7 +55,7 @@ export function PendingReviewsDrawer({
 
   const handleReject = async (reviewId: Id<"translationReviews">) => {
     try {
-      await rejectReview({ reviewId, reviewedBy: currentUserId });
+      await rejectReview({ reviewId });
       toast.success("Review rejected");
     } catch (error) {
       toast.error(
@@ -66,7 +66,7 @@ export function PendingReviewsDrawer({
 
   const handleCancel = async (reviewId: Id<"translationReviews">) => {
     try {
-      await cancelReview({ reviewId, userId: currentUserId });
+      await cancelReview({ reviewId });
       toast.success("Review cancelled");
     } catch (error) {
       toast.error(
@@ -109,49 +109,55 @@ export function PendingReviewsDrawer({
                     </div>
 
                     <div className="space-y-2">
-                       {review.currentValue && (
-                         <div>
-                           <div className="text-xs text-muted-foreground mb-1">
-                             Current:
-                           </div>
-                           <div className="text-sm bg-muted px-3 py-2 rounded">
-                             {review.currentValue}
-                           </div>
-                         </div>
-                       )}
-                       <div>
-                         <div className="text-xs text-muted-foreground mb-1">
-                           Proposed:
-                         </div>
-                         <div className="text-sm bg-primary/10 px-3 py-2 rounded">
-                           {review.proposedValue}
-                         </div>
-                       </div>
-                     </div>
+                      {review.currentValue && (
+                        <div>
+                          <div className="text-xs text-muted-foreground mb-1">
+                            Current:
+                          </div>
+                          <div className="text-sm bg-muted px-3 py-2 rounded">
+                            {review.currentValue}
+                          </div>
+                        </div>
+                      )}
+                      <div>
+                        <div className="text-xs text-muted-foreground mb-1">
+                          Proposed:
+                        </div>
+                        <div className="text-sm bg-primary/10 px-3 py-2 rounded">
+                          {review.proposedValue}
+                        </div>
+                      </div>
+                    </div>
 
-                     {review.contextTranslations && review.contextTranslations.length > 0 && (
-                       <div className="pt-2 border-t">
-                         <div className="text-xs font-medium text-muted-foreground mb-2">
-                           Context - All Locales:
-                         </div>
-                         <div className="space-y-2 max-h-[150px] overflow-y-auto">
-                           {review.contextTranslations.map((translation: any) => (
-                             <div key={translation._id} className="text-xs">
-                               <div className="text-muted-foreground mb-1 font-medium">
-                                 {translation.locale?.name} ({translation.locale?.code}):
-                               </div>
-                               <div className={`px-2 py-1 rounded ${
-                                 translation.localeId === review.localeId
-                                   ? "bg-primary/10 text-slate-700 dark:text-slate-300 border border-primary/30"
-                                   : "bg-muted text-slate-700 dark:text-slate-300"
-                               }`}>
-                                 {translation.value || "(no translation)"}
-                               </div>
-                             </div>
-                           ))}
-                         </div>
-                       </div>
-                     )}
+                    {review.contextTranslations &&
+                      review.contextTranslations.length > 0 && (
+                        <div className="pt-2 border-t">
+                          <div className="text-xs font-medium text-muted-foreground mb-2">
+                            Context - All Locales:
+                          </div>
+                          <div className="space-y-2 max-h-[150px] overflow-y-auto">
+                            {review.contextTranslations.map(
+                              (translation: any) => (
+                                <div key={translation._id} className="text-xs">
+                                  <div className="text-muted-foreground mb-1 font-medium">
+                                    {translation.locale?.name} (
+                                    {translation.locale?.code}):
+                                  </div>
+                                  <div
+                                    className={`px-2 py-1 rounded ${
+                                      translation.localeId === review.localeId
+                                        ? "bg-primary/10 text-slate-700 dark:text-slate-300 border border-primary/30"
+                                        : "bg-muted text-slate-700 dark:text-slate-300"
+                                    }`}
+                                  >
+                                    {translation.value || "(no translation)"}
+                                  </div>
+                                </div>
+                              ),
+                            )}
+                          </div>
+                        </div>
+                      )}
 
                     <div className="flex items-center justify-between pt-2">
                       <div className="text-xs text-muted-foreground">

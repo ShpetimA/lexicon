@@ -3,6 +3,7 @@ import { Languages } from "lucide-react";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
 import { useState } from "react";
 import { AutoTranslateDrawer } from "./AutoTranslateDrawer";
+import { useApp } from "@/src/routes/_authed/_customer/selectedApp";
 
 type Locale = {
   _id: Id<"globalLocales">;
@@ -18,15 +19,14 @@ interface AutoTranslateButtonProps {
   keyId: Id<"keys">;
   translations: Doc<"translations">[];
   locales: Locale[];
-  appId: Id<"apps">;
 }
 
 export function AutoTranslateButton({
   keyId,
   translations,
   locales,
-  appId,
 }: AutoTranslateButtonProps) {
+  const appId = useApp().selectedApp._id;
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   return (

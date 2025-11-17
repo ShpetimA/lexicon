@@ -28,22 +28,16 @@ interface TranslationKeyCardProps {
     key: Doc<"keys">;
     translations: Doc<"translations">[];
   };
-  keyName: string;
   filteredLocales?: Locale[];
-  appId: Id<"apps">;
   reviewMap?: Record<string, any>;
-  currentUserId?: Id<"users">;
 }
 
 export function TranslationKeyCard({
   translationKey,
   locales,
   translations,
-  keyName,
   filteredLocales,
-  appId,
   reviewMap,
-  currentUserId,
 }: TranslationKeyCardProps) {
   const displayLocales =
     filteredLocales && filteredLocales.length > 0 ? filteredLocales : locales;
@@ -56,7 +50,6 @@ export function TranslationKeyCard({
           keyId={translationKey._id}
           translations={translations.translations}
           locales={locales}
-          appId={appId}
         />
         <TranslationKeyActions translationKey={translationKey} />
       </div>
@@ -77,7 +70,6 @@ export function TranslationKeyCard({
               locale={locale}
               translation={translation}
               reviews={reviews}
-              currentUserId={currentUserId}
             />
           );
         })}

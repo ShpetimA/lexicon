@@ -16,9 +16,9 @@ export async function getUser(ctx: MutationCtx | QueryCtx | ActionCtx) {
   if (!betterAuthUser) throw new Error("Authentication required");
 
   if (isActionCtx(ctx)) {
-    const user: any = await ctx.runQuery(api.users.getUserByBetterAuthId, {
+    const user = (await ctx.runQuery(api.users.getUserByBetterAuthId, {
       betterAuthUserId: betterAuthUser._id,
-    });
+    })) as Doc<"users"> | null;
 
     if (!user) throw new Error("User not found");
     return user;

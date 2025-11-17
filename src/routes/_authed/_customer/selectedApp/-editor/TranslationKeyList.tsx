@@ -3,8 +3,6 @@ import { TranslationKeyCard } from "./TranslationKeyCard";
 import { Search, Plus } from "lucide-react";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
 
-type TranslationStatus = "idle" | "pending" | "success" | "error";
-
 type Locale = {
   _id: Id<"globalLocales">;
   code: string;
@@ -37,9 +35,7 @@ type TranslationKeyListProps = {
   filteredLocales: Locale[];
   searchTerm: string;
   onAddKey: () => void;
-  appId: Id<"apps">;
   reviewMap?: Record<string, any>;
-  currentUserId?: Id<"users">;
 };
 
 export function TranslationKeyList({
@@ -49,9 +45,7 @@ export function TranslationKeyList({
   filteredLocales,
   searchTerm,
   onAddKey,
-  appId,
   reviewMap,
-  currentUserId,
 }: TranslationKeyListProps) {
   if (keys.length === 0) {
     return (
@@ -86,11 +80,8 @@ export function TranslationKeyList({
               translationKey={key}
               locales={locales || []}
               translations={keyData}
-              keyName={key.name}
               filteredLocales={filteredLocales}
-              appId={appId}
               reviewMap={reviewMap}
-              currentUserId={currentUserId}
             />
           );
         })}

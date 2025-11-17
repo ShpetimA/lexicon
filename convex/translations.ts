@@ -1,10 +1,44 @@
 import { v } from "convex/values";
-import { mutation, query, action } from "./_generated/server";
+import { mutation, query, action, MutationCtx } from "./_generated/server";
 import { api } from "./_generated/api";
 import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { z } from "zod";
-import { Doc } from "./_generated/dataModel";
+import { Doc, Id } from "./_generated/dataModel";
+import { getUser } from "./lib/roles";
+
+const requiresReview = async (
+  ctx: MutationCtx,
+  keyId: Id<"keys">,
+  updatedBy: Id<"users">,
+  localeId: Id<"globalLocales">,
+  value: string,
+) => {
+  const key = await ctx.db.get(keyId);
+  if (!key) throw new Error("Key not found");
+  const appLocale = await ctx.db
+    .query("appLocales")
+    .withIndex("by_app_locale", (q) =>
+      q.eq("appId", key.appId).eq("localeId", localeId),
+    )
+    .first();
+  if (!appLocale) return false;
+
+  if (appLocale.requiresReview) {
+    await ctx.db.insert("translationReviews", {
+      translationId: undefined,
+      keyId: keyId,
+      localeId: localeId,
+      status: "pending",
+      proposedValue: value,
+      currentValue: undefined,
+      requestedBy: updatedBy,
+      requestedAt: Date.now(),
+    });
+    return true;
+  }
+  return false;
+};
 
 export const list = query({
   args: { keyId: v.id("keys") },
@@ -64,12 +98,16 @@ export const getEditorData = query({
     const endIndex = startIndex + args.limit;
     const paginatedKeys = allKeys.slice(startIndex, endIndex);
 
-    const data: Record<string, { key: Doc<"keys">; translations: Doc<"translations">[] }> = {};
+    const data: Record<
+      string,
+      { key: Doc<"keys">; translations: Doc<"translations">[] }
+    > = {};
 
     for (const key of paginatedKeys) {
       const translations = await ctx.db
         .query("translations")
         .withIndex("by_key", (q) => q.eq("keyId", key._id))
+        .order("desc")
         .collect();
 
       data[key.name] = {
@@ -105,6 +143,16 @@ export const create = mutation({
     updatedBy: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const review = await requiresReview(
+      ctx,
+      args.keyId,
+      args.updatedBy,
+      args.localeId,
+      args.value,
+    );
+
+    if (review) return null;
+
     const translationId = await ctx.db.insert("translations", {
       value: args.value,
       keyId: args.keyId,
@@ -131,16 +179,26 @@ export const update = mutation({
       )
       .first();
 
-    if (existing) {
-      await ctx.db.patch(existing._id, {
-        value: args.value,
-        updatedBy: args.updatedBy,
-        updatedAt: Date.now(),
-      });
-      return existing._id;
+    if (!existing) return null;
+
+    const review = await requiresReview(
+      ctx,
+      args.keyId,
+      args.updatedBy,
+      args.localeId,
+      args.value,
+    );
+
+    if (review) {
+      return null;
     }
 
-    return null;
+    await ctx.db.patch(existing._id, {
+      value: args.value,
+      updatedBy: args.updatedBy,
+      updatedAt: Date.now(),
+    });
+    return existing._id;
   },
 });
 
@@ -149,9 +207,9 @@ export const upsert = mutation({
     keyId: v.id("keys"),
     localeId: v.id("globalLocales"),
     value: v.string(),
-    updatedBy: v.optional(v.id("users")),
   },
   handler: async (ctx, args) => {
+    const updatedBy = await getUser(ctx);
     const existing = await ctx.db
       .query("translations")
       .withIndex("by_key_locale", (q) =>
@@ -159,10 +217,22 @@ export const upsert = mutation({
       )
       .first();
 
+    const review = await requiresReview(
+      ctx,
+      args.keyId,
+      updatedBy._id,
+      args.localeId,
+      args.value,
+    );
+
+    if (review) {
+      return null;
+    }
+
     if (existing) {
       await ctx.db.patch(existing._id, {
         value: args.value,
-        updatedBy: args.updatedBy,
+        updatedBy: updatedBy._id,
         updatedAt: Date.now(),
       });
       return existing._id;
@@ -172,7 +242,7 @@ export const upsert = mutation({
       value: args.value,
       keyId: args.keyId,
       localeId: args.localeId,
-      updatedBy: args.updatedBy,
+      updatedBy: updatedBy._id,
       updatedAt: Date.now(),
     });
     return translationId;
@@ -278,8 +348,12 @@ export const autoTranslate = action({
       args.targetLocaleIds.includes(l._id),
     );
 
-    const results: Array<{ locale: string; success: boolean; error?: string; requiresReview?: boolean }> =
-      [];
+    const results: Array<{
+      locale: string;
+      success: boolean;
+      error?: string;
+      requiresReview?: boolean;
+    }> = [];
 
     const systemContent = args.instructions
       ? `Translate the following text to the following locales: ${targetLocales.map((l) => l.code).join(", ")}. Follow these instructions: ${args.instructions}. Return only the translated text without any explanation or additional context.`
@@ -323,16 +397,22 @@ export const autoTranslate = action({
             value: translatedText,
             updatedBy: args.updatedBy,
           });
-          results.push({ locale: localeCode, success: true, requiresReview: true });
+          results.push({
+            locale: localeCode,
+            success: true,
+            requiresReview: true,
+          });
         } else {
-          // Direct save
           await ctx.runMutation(api.translations.upsert, {
             keyId: args.keyId,
             localeId: locale._id,
             value: translatedText,
-            updatedBy: args.updatedBy,
           });
-          results.push({ locale: localeCode, success: true, requiresReview: false });
+          results.push({
+            locale: localeCode,
+            success: true,
+            requiresReview: false,
+          });
         }
       } catch (error) {
         console.error(error);
@@ -356,25 +436,24 @@ export const bulkAutoTranslate = action({
     actionType: v.union(
       v.literal("translateAll"),
       v.literal("fillMissing"),
-      v.literal("refreshLocale")
+      v.literal("refreshLocale"),
     ),
     instructions: v.optional(v.string()),
-    updatedBy: v.optional(v.id("users")),
     keyNames: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
+    const updatedBy = await getUser(ctx);
     const keysData = await ctx.runQuery(api.translations.getEditorData, {
       appId: args.appId,
       page: 1,
       limit: 10000,
     });
 
-    let keys = Object.values(keysData.data).map(item => item.key);
+    let keys = Object.values(keysData.data).map((item) => item.key);
 
-    // Filter by selected key names if provided
     if (args.keyNames && args.keyNames.length > 0) {
       const keyNameSet = new Set(args.keyNames);
-      keys = keys.filter(key => keyNameSet.has(key.name));
+      keys = keys.filter((key) => keyNameSet.has(key.name));
     }
     const locales = await ctx.runQuery(api.locales.list, { appId: args.appId });
 
@@ -387,8 +466,15 @@ export const bulkAutoTranslate = action({
       args.targetLocaleIds.includes(l._id),
     );
 
-    // Collect all translation tasks to run in parallel
-    const translationTasks: Array<() => Promise<{ keyName: string; locale: string; success: boolean; error?: string; requiresReview?: boolean }>> = [];
+    const translationTasks: Array<
+      () => Promise<{
+        keyName: string;
+        locale: string;
+        success: boolean;
+        error?: string;
+        requiresReview?: boolean;
+      }>
+    > = [];
 
     for (const key of keys) {
       const translations = await ctx.runQuery(api.translations.list, {
@@ -400,7 +486,6 @@ export const bulkAutoTranslate = action({
       );
 
       if (!sourceTranslation?.value) {
-        // Add all target locales as failed results
         for (const targetLocale of targetLocales) {
           translationTasks.push(async () => ({
             keyName: key.name,
@@ -423,7 +508,6 @@ export const bulkAutoTranslate = action({
           continue;
         }
 
-        // Create async task for this translation
         translationTasks.push(async () => {
           try {
             const systemContent = args.instructions
@@ -447,16 +531,14 @@ export const bulkAutoTranslate = action({
               ],
             });
 
-            // Check if locale requires review
             const requiresReview = targetLocale.requiresReview || false;
 
-            if (requiresReview && args.updatedBy) {
-              // Submit for review
+            if (requiresReview) {
               await ctx.runMutation(api.translations.submitForReview, {
                 keyId: key._id,
                 localeId: targetLocale._id,
                 value: result.object.translation,
-                updatedBy: args.updatedBy,
+                updatedBy: updatedBy._id,
               });
               return {
                 keyName: key.name,
@@ -465,12 +547,10 @@ export const bulkAutoTranslate = action({
                 requiresReview: true,
               };
             } else {
-              // Direct save
               await ctx.runMutation(api.translations.upsert, {
                 keyId: key._id,
                 localeId: targetLocale._id,
                 value: result.object.translation,
-                updatedBy: args.updatedBy,
               });
               return {
                 keyName: key.name,
@@ -492,8 +572,7 @@ export const bulkAutoTranslate = action({
       }
     }
 
-    // Execute all tasks in parallel
-    const results = await Promise.all(translationTasks.map(task => task()));
+    const results = await Promise.all(translationTasks.map((task) => task()));
 
     return results;
   },
@@ -584,13 +663,12 @@ export const submitForReview = mutation({
   },
 });
 
-// Approve review
 export const approveReview = mutation({
   args: {
     reviewId: v.id("translationReviews"),
-    reviewedBy: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const user = await getUser(ctx);
     const review = await ctx.db.get(args.reviewId);
     if (!review) throw new Error("Review not found");
 
@@ -598,11 +676,10 @@ export const approveReview = mutation({
       throw new Error("Review is not pending");
     }
 
-    if (review.requestedBy === args.reviewedBy) {
+    if (review.requestedBy === user?._id) {
       throw new Error("Cannot review your own changes");
     }
 
-    // Update or create translation
     const existing = await ctx.db
       .query("translations")
       .withIndex("by_key_locale", (q) =>
@@ -626,10 +703,9 @@ export const approveReview = mutation({
       });
     }
 
-    // Update review status
     await ctx.db.patch(args.reviewId, {
       status: "approved",
-      reviewedBy: args.reviewedBy,
+      reviewedBy: user?._id,
       reviewedAt: Date.now(),
     });
 
@@ -637,14 +713,13 @@ export const approveReview = mutation({
   },
 });
 
-// Reject review
 export const rejectReview = mutation({
   args: {
     reviewId: v.id("translationReviews"),
-    reviewedBy: v.id("users"),
     comment: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const user = await getUser(ctx);
     const review = await ctx.db.get(args.reviewId);
     if (!review) throw new Error("Review not found");
 
@@ -652,13 +727,13 @@ export const rejectReview = mutation({
       throw new Error("Review is not pending");
     }
 
-    if (review.requestedBy === args.reviewedBy) {
+    if (review.requestedBy === user?._id) {
       throw new Error("Cannot review your own changes");
     }
 
     await ctx.db.patch(args.reviewId, {
       status: "rejected",
-      reviewedBy: args.reviewedBy,
+      reviewedBy: user?._id,
       reviewedAt: Date.now(),
       comment: args.comment,
     });
@@ -667,17 +742,16 @@ export const rejectReview = mutation({
   },
 });
 
-// Cancel review (only by requestor)
 export const cancelReview = mutation({
   args: {
     reviewId: v.id("translationReviews"),
-    userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const user = await getUser(ctx);
     const review = await ctx.db.get(args.reviewId);
     if (!review) throw new Error("Review not found");
 
-    if (review.requestedBy !== args.userId) {
+    if (review.requestedBy !== user?._id) {
       throw new Error("Only the requestor can cancel a review");
     }
 
@@ -694,14 +768,12 @@ export const cancelReview = mutation({
   },
 });
 
-// List pending reviews
 export const listPendingReviews = query({
   args: {
     appId: v.id("apps"),
     localeId: v.optional(v.id("globalLocales")),
   },
   handler: async (ctx, args) => {
-    // Get all keys for this app
     const keys = await ctx.db
       .query("keys")
       .withIndex("by_app", (q) => q.eq("appId", args.appId))
@@ -714,28 +786,23 @@ export const listPendingReviews = query({
       .withIndex("by_status", (q) => q.eq("status", "pending"))
       .collect();
 
-    // Filter by keys belonging to this app
     reviews = reviews.filter((r) => keyIds.includes(r.keyId));
 
-    // Filter by locale if specified
     if (args.localeId) {
       reviews = reviews.filter((r) => r.localeId === args.localeId);
     }
 
-    // Enrich with key, locale, user data, and ALL translations for context
     const enrichedReviews = await Promise.all(
       reviews.map(async (review) => {
         const key = await ctx.db.get(review.keyId);
         const locale = await ctx.db.get(review.localeId);
         const requestedBy = await ctx.db.get(review.requestedBy);
 
-        // Get all translations for this key (for drawer context)
         const allTranslations = await ctx.db
           .query("translations")
           .withIndex("by_key", (q) => q.eq("keyId", review.keyId))
           .collect();
 
-        // Enrich with locale info
         const contextTranslations = await Promise.all(
           allTranslations.map(async (trans) => {
             const transLocale = await ctx.db.get(trans.localeId);
@@ -766,7 +833,6 @@ export const listPendingReviews = query({
   },
 });
 
-// Get review history for a translation
 export const getReviewHistory = query({
   args: {
     keyId: v.id("keys"),
@@ -780,7 +846,6 @@ export const getReviewHistory = query({
       )
       .collect();
 
-    // Enrich with user data
     const enrichedReviews = await Promise.all(
       reviews.map(async (review) => {
         const requestedBy = await ctx.db.get(review.requestedBy);
@@ -812,7 +877,6 @@ export const getReviewHistory = query({
   },
 });
 
-// Check if locale requires review
 export const checkReviewRequired = query({
   args: {
     appId: v.id("apps"),

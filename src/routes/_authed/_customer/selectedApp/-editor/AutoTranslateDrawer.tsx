@@ -14,14 +14,24 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { useConvexAction, useConvexMutation, useConvexQuery } from "@convex-dev/react-query";
+import {
+  useConvexAction,
+  useConvexMutation,
+  useConvexQuery,
+} from "@convex-dev/react-query";
 import { api } from "@/convex/_generated/api";
 import { useQuery } from "@tanstack/react-query";
 import { convexQuery } from "@convex-dev/react-query";
 import { toast } from "sonner";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, XCircle, Loader2, Save, BookmarkPlus } from "lucide-react";
+import {
+  CheckCircle2,
+  XCircle,
+  Loader2,
+  Save,
+  BookmarkPlus,
+} from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -58,7 +68,12 @@ interface AutoTranslateDrawerProps {
   appId: Id<"apps">;
 }
 
-type TranslationStep = "source" | "sourceText" | "targets" | "instructions" | "translating";
+type TranslationStep =
+  | "source"
+  | "sourceText"
+  | "targets"
+  | "instructions"
+  | "translating";
 
 interface TranslationResult {
   locale: string;
@@ -76,16 +91,17 @@ export function AutoTranslateDrawer({
   appId,
 }: AutoTranslateDrawerProps) {
   const { data: currentUser } = useQuery(
-    convexQuery(api.users.getCurrentUserRecord, {})
+    convexQuery(api.users.getCurrentUserRecord, {}),
   );
   const [step, setStep] = useState<TranslationStep>("source");
-  const [sourceLocaleId, setSourceLocaleId] = useState<Id<"globalLocales"> | null>(
-    () => locales.find((l) => l.isDefault)?._id ?? null
-  );
+  const [sourceLocaleId, setSourceLocaleId] =
+    useState<Id<"globalLocales"> | null>(
+      () => locales.find((l) => l.isDefault)?._id ?? null,
+    );
   const [sourceText, setSourceText] = useState("");
-  const [targetLocaleIds, setTargetLocaleIds] = useState<Set<Id<"globalLocales">>>(
-    new Set()
-  );
+  const [targetLocaleIds, setTargetLocaleIds] = useState<
+    Set<Id<"globalLocales">>
+  >(new Set());
   const [instructions, setInstructions] = useState("");
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
   const [isTranslating, setIsTranslating] = useState(false);
@@ -95,9 +111,12 @@ export function AutoTranslateDrawer({
   const [templateName, setTemplateName] = useState("");
 
   const autoTranslateMutation = useConvexAction(api.translations.autoTranslate);
-  const createTemplateMutation = useConvexMutation(api.instructionTemplates.create);
+  const createTemplateMutation = useConvexMutation(
+    api.instructionTemplates.create,
+  );
   const upsertTranslationMutation = useConvexMutation(api.translations.upsert);
-  const templates = useConvexQuery(api.instructionTemplates.list, { appId }) ?? [];
+  const templates =
+    useConvexQuery(api.instructionTemplates.list, { appId }) ?? [];
 
   const hasTranslation = (localeId: Id<"globalLocales">) => {
     return translations.some((t) => t.localeId === localeId && t.value);
@@ -147,7 +166,6 @@ export function AutoTranslateDrawer({
           keyId,
           localeId: sourceLocaleId,
           value: sourceText,
-          updatedBy: currentUser._id,
         });
       }
 
@@ -156,7 +174,6 @@ export function AutoTranslateDrawer({
         sourceLocaleId,
         targetLocaleIds: Array.from(targetLocaleIds),
         instructions: instructions || undefined,
-        updatedBy: currentUser?._id,
       });
 
       setResults(response);
@@ -168,13 +185,15 @@ export function AutoTranslateDrawer({
 
       if (failCount === 0) {
         if (reviewCount > 0) {
-          toast.success(`Submitted ${reviewCount} translations for review, ${successCount - reviewCount} saved directly`);
+          toast.success(
+            `Submitted ${reviewCount} translations for review, ${successCount - reviewCount} saved directly`,
+          );
         } else {
           toast.success(`Translated to ${successCount} locales`);
         }
       } else {
         toast.warning(
-          `Translated to ${successCount} locales, ${failCount} failed`
+          `Translated to ${successCount} locales, ${failCount} failed`,
         );
       }
     } catch (error) {
@@ -401,7 +420,10 @@ export function AutoTranslateDrawer({
           {step === "instructions" && (
             <div className="space-y-4">
               <div className="flex items-center gap-2">
-                <Select value={selectedTemplateId} onValueChange={handleSelectTemplate}>
+                <Select
+                  value={selectedTemplateId}
+                  onValueChange={handleSelectTemplate}
+                >
                   <SelectTrigger className="flex-1">
                     <SelectValue placeholder="Select a template (optional)" />
                   </SelectTrigger>
@@ -513,7 +535,10 @@ export function AutoTranslateDrawer({
         </DrawerFooter>
       </DrawerContent>
 
-      <Dialog open={saveTemplateDialogOpen} onOpenChange={setSaveTemplateDialogOpen}>
+      <Dialog
+        open={saveTemplateDialogOpen}
+        onOpenChange={setSaveTemplateDialogOpen}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Save Template</DialogTitle>

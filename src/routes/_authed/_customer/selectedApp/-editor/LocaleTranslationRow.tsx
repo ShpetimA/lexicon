@@ -24,7 +24,6 @@ interface LocaleTranslationRowProps {
   locale: Locale;
   translation?: Doc<"translations">;
   reviews?: any[];
-  currentUserId?: Id<"users">;
   keyId: Id<"keys">;
 }
 
@@ -33,7 +32,6 @@ export function LocaleTranslationRow({
   translation,
   keyId,
   reviews,
-  currentUserId,
 }: LocaleTranslationRowProps) {
   const [value, setValue] = useState(translation?.value || "");
   const { data: currentUser } = useQuery(
@@ -63,7 +61,6 @@ export function LocaleTranslationRow({
       keyId,
       localeId: localeId,
       value,
-      updatedBy: currentUser._id,
     });
 
     setTranslationStatus("success");
@@ -137,7 +134,7 @@ export function LocaleTranslationRow({
         </div>
       </div>
       {reviews && reviews.length > 0 && (
-        <PendingReviewStack reviews={reviews} currentUserId={currentUserId} />
+        <PendingReviewStack reviews={reviews} />
       )}
     </div>
   );

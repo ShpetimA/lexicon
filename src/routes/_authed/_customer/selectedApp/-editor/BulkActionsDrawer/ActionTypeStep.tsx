@@ -21,10 +21,7 @@ export function ActionTypeStep() {
           onClick={() => handleChange("translateAll")}
         >
           <RadioGroupItem value="translateAll" id="translateAll" />
-          <Label
-            htmlFor="translateAll"
-            className="flex-1 cursor-pointer"
-          >
+          <Label htmlFor="translateAll" className="flex-1 cursor-pointer">
             <div className="flex flex-col gap-1">
               <span className="font-medium">Translate All Keys</span>
               <span className="text-sm text-muted-foreground">
@@ -39,14 +36,9 @@ export function ActionTypeStep() {
           onClick={() => handleChange("fillMissing")}
         >
           <RadioGroupItem value="fillMissing" id="fillMissing" />
-          <Label
-            htmlFor="fillMissing"
-            className="flex-1 cursor-pointer"
-          >
+          <Label htmlFor="fillMissing" className="flex-1 cursor-pointer">
             <div className="flex flex-col gap-1">
-              <span className="font-medium">
-                Fill Missing Translations
-              </span>
+              <span className="font-medium">Fill Missing Translations</span>
               <span className="text-sm text-muted-foreground">
                 Only translate keys that are missing translations
               </span>
@@ -61,9 +53,7 @@ export function ActionTypeStep() {
           <RadioGroupItem value="copyLocale" id="copyLocale" />
           <Label htmlFor="copyLocale" className="flex-1 cursor-pointer">
             <div className="flex flex-col gap-1">
-              <span className="font-medium">
-                Copy Locale to Another
-              </span>
+              <span className="font-medium">Copy Locale to Another</span>
               <span className="text-sm text-muted-foreground">
                 Duplicate all translations from one locale to another
               </span>
