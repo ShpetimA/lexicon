@@ -5,7 +5,6 @@ import {
   Smartphone,
   Users,
   Server,
-  CreditCard,
 } from "lucide-react";
 import { NavMain } from "./NavMain";
 import { NavUser } from "./NavUser";

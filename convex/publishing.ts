@@ -9,6 +9,8 @@ import {
 import { r2 } from "./storage";
 import { api, internal } from "./_generated/api";
 import { Doc, Id } from "./_generated/dataModel";
+import { userQuery } from "./lib/auth";
+import { getUser, requireAppAccess } from "./lib/roles";
 
 const CDN_BASE_URL = "https://lex-icon.me";
 
@@ -92,25 +94,25 @@ export const cleanupOldSnapshots = internalAction({
   },
 });
 
-// Public query for customers to get CDN URL (with API key auth)
-export const getCdnUrl = query({
+export const getCdnUrl = userQuery({
   args: {
     appId: v.id("apps"),
     environmentId: v.id("environments"),
     apiKey: v.string(),
   },
   handler: async (ctx, args) => {
-    // Verify API key matches app
+    const user = await getUser(ctx);
     const app = await ctx.db
       .query("apps")
       .withIndex("by_api_key", (q) => q.eq("apiKey", args.apiKey))
       .first();
 
+    await requireAppAccess(ctx, args.appId, ["owner", "admin", "member"]);
+
     if (!app || app._id !== args.appId) {
       throw new Error("Invalid API key");
     }
 
-    // Get latest snapshot
     const snapshot = await ctx.db
       .query("snapshots")
       .withIndex("by_app_env_version", (q) =>
@@ -123,7 +125,6 @@ export const getCdnUrl = query({
       return null;
     }
 
-    // Return CDN URLs
     return {
       version: snapshot.version,
       cdnUrl: snapshot.cdnUrl || `${CDN_BASE_URL}/${snapshot.data}`,
@@ -139,9 +140,9 @@ export const publish = action({
   args: {
     appId: v.id("apps"),
     environmentId: v.id("environments"),
-    userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const user = await getUser(ctx);
     const data = await ctx.runQuery(
       (api as any).environments.generateExportData,
       {
@@ -160,23 +161,19 @@ export const publish = action({
     const jsonString = JSON.stringify(data, null, 2);
     const blob = new Blob([jsonString], { type: "application/json" });
 
-    // Generate keys
     const versionedKey = `${args.appId}/${args.environmentId}/v${nextVersion}.json`;
     const latestKey = `${args.appId}/${args.environmentId}/latest.json`;
 
-    // Store versioned file
     await r2.store(ctx, blob, {
       key: versionedKey,
       type: "application/json",
     });
 
-    // Store as latest.json (same content)
     await r2.store(ctx, blob, {
       key: latestKey,
       type: "application/json",
     });
 
-    // Generate CDN URLs
     const cdnUrl = `${CDN_BASE_URL}/${versionedKey}`;
     const latestUrl = `${CDN_BASE_URL}/${latestKey}`;
 
@@ -187,7 +184,7 @@ export const publish = action({
         environmentId: args.environmentId,
         version: nextVersion,
         data: versionedKey,
-        publishedBy: args.userId,
+        publishedBy: user._id,
         cdnUrl,
         latestUrl,
       },

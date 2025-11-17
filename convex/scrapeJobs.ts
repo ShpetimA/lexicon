@@ -5,7 +5,8 @@ import {
   internalMutation,
   internalQuery,
 } from "./_generated/server";
-import { getUser, requireAppAccess, requireRole } from "./lib/roles";
+import { getUser, requireAppAccess } from "./lib/roles";
+import { userMutation } from "./lib/auth";
 
 export const createScrapeJobInternal = internalMutation({
   args: {
@@ -25,16 +26,18 @@ export const createScrapeJobInternal = internalMutation({
   },
 });
 
-export const createScrapeJob = mutation({
+export const createScrapeJob = userMutation({
   args: {
     appId: v.id("apps"),
-    userId: v.id("users"),
     url: v.string(),
   },
   handler: async (ctx, args) => {
+    const user = await getUser(ctx);
+    await requireAppAccess(ctx, args.appId, ["owner", "admin", "member"]);
+
     const jobId = await ctx.db.insert("scrapeJobs", {
       appId: args.appId,
-      userId: args.userId,
+      userId: user._id,
       url: args.url,
       status: "pending",
       startedAt: Date.now(),

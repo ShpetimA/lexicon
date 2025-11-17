@@ -50,7 +50,7 @@ export function PublishDialog({
     isPending,
   } = useMutation({
     mutationFn: async (environmentId: Id<"environments">) => {
-      return publishAction({ appId, environmentId, userId });
+      return publishAction({ appId, environmentId });
     },
     onError: () => {
       toast.error("Failed to publish");

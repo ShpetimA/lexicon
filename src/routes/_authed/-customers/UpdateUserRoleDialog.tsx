@@ -26,7 +26,12 @@ import { useMutation } from "@tanstack/react-query";
 type UpdateUserRoleDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  customerUser: Doc<"customerUsers"> & { user: Doc<"users"> | null };
+  customerUser: Doc<"customerUsers"> & {
+    user: {
+      name?: string;
+      email: string;
+    } | null;
+  };
 };
 
 const roleSchema = z.object({

@@ -5,7 +5,8 @@ import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { z } from "zod";
 import { Doc, Id } from "./_generated/dataModel";
-import { getUser } from "./lib/roles";
+import { getUser, requireAppAccess, requireAppAccessAction } from "./lib/roles";
+import { userQuery, userMutation } from "./lib/auth";
 
 const requiresReview = async (
   ctx: MutationCtx,
@@ -40,9 +41,13 @@ const requiresReview = async (
   return false;
 };
 
-export const list = query({
+export const list = userQuery({
   args: { keyId: v.id("keys") },
   handler: async (ctx, args) => {
+    const key = await ctx.db.get(args.keyId);
+    if (!key) throw new Error("Key not found");
+    await requireAppAccess(ctx, key.appId, ["owner", "admin", "member"]);
+
     return await ctx.db
       .query("translations")
       .withIndex("by_key", (q) => q.eq("keyId", args.keyId))
@@ -50,9 +55,11 @@ export const list = query({
   },
 });
 
-export const listByApp = query({
+export const listByApp = userQuery({
   args: { appId: v.id("apps") },
   handler: async (ctx, args) => {
+    await requireAppAccess(ctx, args.appId, ["owner", "admin", "member"]);
+
     const keys = await ctx.db
       .query("keys")
       .withIndex("by_app", (q) => q.eq("appId", args.appId))
@@ -71,7 +78,7 @@ export const listByApp = query({
   },
 });
 
-export const getEditorData = query({
+export const getEditorData = userQuery({
   args: {
     appId: v.id("apps"),
     page: v.number(),
@@ -79,6 +86,8 @@ export const getEditorData = query({
     search: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireAppAccess(ctx, args.appId, ["owner", "admin", "member"]);
+
     let keysQuery = ctx.db
       .query("keys")
       .withIndex("by_app", (q) => q.eq("appId", args.appId))
@@ -86,7 +95,6 @@ export const getEditorData = query({
 
     let allKeys = await keysQuery.collect();
 
-    // Sort by createdAt descending (newest first)
     allKeys.sort((a, b) => b.createdAt - a.createdAt);
 
     if (args.search) {
@@ -131,14 +139,21 @@ export const getEditorData = query({
   },
 });
 
-export const get = query({
+export const get = userQuery({
   args: { id: v.id("translations") },
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.id);
+    const translation = await ctx.db.get(args.id);
+    if (!translation) throw new Error("Translation not found");
+
+    const key = await ctx.db.get(translation.keyId);
+    if (!key) throw new Error("Key not found");
+    await requireAppAccess(ctx, key.appId, ["owner", "admin", "member"]);
+
+    return translation;
   },
 });
 
-export const create = mutation({
+export const create = userMutation({
   args: {
     keyId: v.id("keys"),
     localeId: v.id("globalLocales"),
@@ -146,6 +161,10 @@ export const create = mutation({
     updatedBy: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const key = await ctx.db.get(args.keyId);
+    if (!key) throw new Error("Key not found");
+    await requireAppAccess(ctx, key.appId, ["owner", "admin", "member"]);
+
     const review = await requiresReview(
       ctx,
       args.keyId,
@@ -167,7 +186,7 @@ export const create = mutation({
   },
 });
 
-export const update = mutation({
+export const update = userMutation({
   args: {
     keyId: v.id("keys"),
     localeId: v.id("globalLocales"),
@@ -175,6 +194,10 @@ export const update = mutation({
     updatedBy: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const key = await ctx.db.get(args.keyId);
+    if (!key) throw new Error("Key not found");
+    await requireAppAccess(ctx, key.appId, ["owner", "admin", "member"]);
+
     const existing = await ctx.db
       .query("translations")
       .withIndex("by_key_locale", (q) =>
@@ -205,13 +228,17 @@ export const update = mutation({
   },
 });
 
-export const upsert = mutation({
+export const upsert = userMutation({
   args: {
     keyId: v.id("keys"),
     localeId: v.id("globalLocales"),
     value: v.string(),
   },
   handler: async (ctx, args) => {
+    const key = await ctx.db.get(args.keyId);
+    if (!key) throw new Error("Key not found");
+    await requireAppAccess(ctx, key.appId, ["owner", "admin", "member"]);
+
     const updatedBy = await getUser(ctx);
     const existing = await ctx.db
       .query("translations")
@@ -252,14 +279,21 @@ export const upsert = mutation({
   },
 });
 
-export const remove = mutation({
+export const remove = userMutation({
   args: { id: v.id("translations") },
   handler: async (ctx, args) => {
+    const translation = await ctx.db.get(args.id);
+    if (!translation) throw new Error("Translation not found");
+
+    const key = await ctx.db.get(translation.keyId);
+    if (!key) throw new Error("Key not found");
+    await requireAppAccess(ctx, key.appId, ["owner", "admin", "member"]);
+
     await ctx.db.delete(args.id);
   },
 });
 
-export const createBatchWithTranslations = mutation({
+export const createBatchWithTranslations = userMutation({
   args: {
     appId: v.id("apps"),
     localeId: v.id("globalLocales"),
@@ -271,6 +305,8 @@ export const createBatchWithTranslations = mutation({
     ),
   },
   handler: async (ctx, args) => {
+    await requireAppAccess(ctx, args.appId, ["owner", "admin", "member"]);
+
     const createdCount = { keys: 0, translations: 0 };
 
     for (const item of args.translations) {
@@ -328,6 +364,7 @@ export const autoTranslate = action({
     if (!key) {
       throw new Error("Key not found");
     }
+    await requireAppAccessAction(ctx, key.appId, ["owner", "admin", "member"]);
 
     const locales = await ctx.runQuery(api.locales.list, { appId: key.appId });
     const translations = await ctx.runQuery(api.translations.list, {
@@ -389,11 +426,9 @@ export const autoTranslate = action({
           throw new Error(`Locale ${localeCode} not found`);
         }
 
-        // Check if locale requires review
         const requiresReview = locale.requiresReview || false;
 
         if (requiresReview && args.updatedBy) {
-          // Submit for review
           await ctx.runMutation(api.translations.submitForReview, {
             keyId: args.keyId,
             localeId: locale._id,
@@ -445,6 +480,7 @@ export const bulkAutoTranslate = action({
     keyNames: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
+    await requireAppAccessAction(ctx, args.appId, ["owner", "admin", "member"]);
     const updatedBy = await getUser(ctx);
     const keysData = await ctx.runQuery(api.translations.getEditorData, {
       appId: args.appId,
@@ -581,13 +617,15 @@ export const bulkAutoTranslate = action({
   },
 });
 
-export const copyLocale = mutation({
+export const copyLocale = userMutation({
   args: {
     appId: v.id("apps"),
     sourceLocaleId: v.id("globalLocales"),
     targetLocaleId: v.id("globalLocales"),
   },
   handler: async (ctx, args) => {
+    await requireAppAccess(ctx, args.appId, ["owner", "admin", "member"]);
+
     const keys = await ctx.db
       .query("keys")
       .withIndex("by_app", (q) => q.eq("appId", args.appId))
@@ -633,8 +671,7 @@ export const copyLocale = mutation({
   },
 });
 
-// Submit translation for review
-export const submitForReview = mutation({
+export const submitForReview = userMutation({
   args: {
     keyId: v.id("keys"),
     localeId: v.id("globalLocales"),
@@ -642,7 +679,10 @@ export const submitForReview = mutation({
     updatedBy: v.optional(v.id("users")),
   },
   handler: async (ctx, args) => {
-    // Get existing translation if any
+    const key = await ctx.db.get(args.keyId);
+    if (!key) throw new Error("Key not found");
+    await requireAppAccess(ctx, key.appId, ["owner", "admin", "member"]);
+
     const existing = await ctx.db
       .query("translations")
       .withIndex("by_key_locale", (q) =>
@@ -650,7 +690,6 @@ export const submitForReview = mutation({
       )
       .first();
 
-    // Create new review request (allow stacking multiple reviews for same key/locale)
     const reviewId = await ctx.db.insert("translationReviews", {
       translationId: existing?._id,
       keyId: args.keyId,
@@ -666,14 +705,19 @@ export const submitForReview = mutation({
   },
 });
 
-export const approveReview = mutation({
+export const approveReview = userMutation({
   args: {
     reviewId: v.id("translationReviews"),
   },
   handler: async (ctx, args) => {
-    const user = await getUser(ctx);
     const review = await ctx.db.get(args.reviewId);
     if (!review) throw new Error("Review not found");
+
+    const key = await ctx.db.get(review.keyId);
+    if (!key) throw new Error("Key not found");
+    await requireAppAccess(ctx, key.appId, ["owner", "admin", "member"]);
+
+    const user = await getUser(ctx);
 
     if (review.status !== "pending") {
       throw new Error("Review is not pending");
@@ -716,15 +760,20 @@ export const approveReview = mutation({
   },
 });
 
-export const rejectReview = mutation({
+export const rejectReview = userMutation({
   args: {
     reviewId: v.id("translationReviews"),
     comment: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const user = await getUser(ctx);
     const review = await ctx.db.get(args.reviewId);
     if (!review) throw new Error("Review not found");
+
+    const key = await ctx.db.get(review.keyId);
+    if (!key) throw new Error("Key not found");
+    await requireAppAccess(ctx, key.appId, ["owner", "admin", "member"]);
+
+    const user = await getUser(ctx);
 
     if (review.status !== "pending") {
       throw new Error("Review is not pending");
@@ -745,14 +794,19 @@ export const rejectReview = mutation({
   },
 });
 
-export const cancelReview = mutation({
+export const cancelReview = userMutation({
   args: {
     reviewId: v.id("translationReviews"),
   },
   handler: async (ctx, args) => {
-    const user = await getUser(ctx);
     const review = await ctx.db.get(args.reviewId);
     if (!review) throw new Error("Review not found");
+
+    const key = await ctx.db.get(review.keyId);
+    if (!key) throw new Error("Key not found");
+    await requireAppAccess(ctx, key.appId, ["owner", "admin", "member"]);
+
+    const user = await getUser(ctx);
 
     if (review.requestedBy !== user?._id) {
       throw new Error("Only the requestor can cancel a review");
@@ -771,12 +825,14 @@ export const cancelReview = mutation({
   },
 });
 
-export const listPendingReviews = query({
+export const listPendingReviews = userQuery({
   args: {
     appId: v.id("apps"),
     localeId: v.optional(v.id("globalLocales")),
   },
   handler: async (ctx, args) => {
+    await requireAppAccess(ctx, args.appId, ["owner", "admin", "member"]);
+
     const keys = await ctx.db
       .query("keys")
       .withIndex("by_app", (q) => q.eq("appId", args.appId))
@@ -836,12 +892,16 @@ export const listPendingReviews = query({
   },
 });
 
-export const getReviewHistory = query({
+export const getReviewHistory = userQuery({
   args: {
     keyId: v.id("keys"),
     localeId: v.id("globalLocales"),
   },
   handler: async (ctx, args) => {
+    const key = await ctx.db.get(args.keyId);
+    if (!key) throw new Error("Key not found");
+    await requireAppAccess(ctx, key.appId, ["owner", "admin", "member"]);
+
     const reviews = await ctx.db
       .query("translationReviews")
       .withIndex("by_key_locale", (q) =>
@@ -880,12 +940,14 @@ export const getReviewHistory = query({
   },
 });
 
-export const checkReviewRequired = query({
+export const checkReviewRequired = userQuery({
   args: {
     appId: v.id("apps"),
     localeId: v.id("globalLocales"),
   },
   handler: async (ctx, args) => {
+    await requireAppAccess(ctx, args.appId, ["owner", "admin", "member"]);
+
     const appLocale = await ctx.db
       .query("appLocales")
       .withIndex("by_app_locale", (q) =>

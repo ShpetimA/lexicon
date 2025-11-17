@@ -10,6 +10,7 @@ const isActionCtx = (
   return "runQuery" in ctx;
 };
 
+
 export async function getUser(ctx: MutationCtx | QueryCtx | ActionCtx) {
   const betterAuthUser = await authComponent.getAuthUser(ctx);
 
@@ -102,4 +103,24 @@ export async function requireAppAccess(
 
   const appWithCustomerId = app;
   return await requireRole(ctx, appWithCustomerId.customerId, allowedRoles);
+}
+
+export async function requireAppAccessAction(
+  ctx: ActionCtx,
+  appId: Id<"apps">,
+  allowedRoles: Role[],
+) {
+  const user = await getUser(ctx);
+  const app = await ctx.runQuery(api.apps.get, { id: appId });
+  if (!app) throw new Error("App not found");
+
+  const customerUser = await ctx.runQuery(api.customerUsers.getByCustomerAndUser, {
+    customerId: app.customerId,
+    userId: user._id,
+  });
+
+  if (!customerUser || !allowedRoles.includes(customerUser.role)) {
+    throw new Error("Unauthorized: Insufficient permissions");
+  }
+  return customerUser;
 }

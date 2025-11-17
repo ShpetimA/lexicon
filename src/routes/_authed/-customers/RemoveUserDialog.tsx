@@ -9,14 +9,19 @@ import {
   AlertDialogTitle,
 } from "../../../../components/ui/alert-dialog";
 import { api } from "../../../../convex/_generated/api";
-import { Doc, Id } from "@/convex/_generated/dataModel";
+import { Doc } from "@/convex/_generated/dataModel";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
 
 type RemoveUserDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  customerUser: Doc<"customerUsers"> & { user: Doc<"users"> | null };
+  customerUser: Doc<"customerUsers"> & {
+    user: {
+      name?: string;
+      email: string;
+    } | null;
+  };
 };
 
 export function RemoveUserDialog({

@@ -41,6 +41,7 @@ export type DropzoneProps = Omit<DropzoneOptions, 'onDrop'> & {
     fileRejections: FileRejection[],
     event: DropEvent
   ) => void;
+  onError?: (error: Error) => void;
   children?: ReactNode;
 };
 
@@ -62,13 +63,11 @@ export const Dropzone = ({
     maxFiles,
     maxSize,
     minSize,
-    onError,
     disabled,
     onDrop: (acceptedFiles, fileRejections, event) => {
       if (fileRejections.length > 0) {
-        const message = fileRejections.at(0)?.errors.at(0)?.message;
+        const message = fileRejections.at(0)?.errors.at(0)?.message ?? 'One or more files were rejected';
         onError?.(new Error(message));
-        return;
       }
 
       onDrop?.(acceptedFiles, fileRejections, event);

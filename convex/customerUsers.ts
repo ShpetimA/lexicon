@@ -17,7 +17,7 @@ export const list = userQuery({
         const user = await ctx.db.get(customerUser.userId);
         return {
           ...customerUser,
-          user: user,
+          user: user ? { name: user.name, email: user.email } : null,
         };
       }),
     );
@@ -122,5 +122,20 @@ export const countByCustomer = userQuery({
       .collect();
 
     return customerUsers.length;
+  },
+});
+
+export const getByCustomerAndUser = userQuery({
+  args: {
+    customerId: v.id("customers"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("customerUsers")
+      .withIndex("by_customer_user", (q) =>
+        q.eq("customerId", args.customerId).eq("userId", args.userId),
+      )
+      .first();
   },
 });
