@@ -10,11 +10,11 @@ import { r2 } from "./storage";
 import { api, internal } from "./_generated/api";
 import { Doc, Id } from "./_generated/dataModel";
 import { userQuery } from "./lib/auth";
-import { getUser, requireAppAccess } from "./lib/roles";
+import { getUser, requireAppAccess, requireAppAccessAction } from "./lib/roles";
 
 const CDN_BASE_URL = "https://lex-icon.me";
 
-export const getSnapshotCount = internalQuery({
+export const getNextVersion = internalQuery({
   args: { environmentId: v.id("environments") },
   handler: async (ctx, args) => {
     const snapshots = await ctx.db
@@ -22,8 +22,14 @@ export const getSnapshotCount = internalQuery({
       .withIndex("by_environment", (q) =>
         q.eq("environmentId", args.environmentId),
       )
+      .order("desc")
       .collect();
-    return snapshots.length;
+
+    if (snapshots.length === 0) return 1;
+
+    // Get max version and add 1
+    const maxVersion = Math.max(...snapshots.map((s) => s.version));
+    return maxVersion + 1;
   },
 });
 
@@ -142,6 +148,7 @@ export const publish = action({
     environmentId: v.id("environments"),
   },
   handler: async (ctx, args) => {
+    await requireAppAccessAction(ctx, args.appId, ["owner", "admin", "member"]);
     const user = await getUser(ctx);
     const data = await ctx.runQuery(
       (api as any).environments.generateExportData,
@@ -150,13 +157,12 @@ export const publish = action({
       },
     );
 
-    const count: number = await ctx.runQuery(
-      (internal as any).publishing.getSnapshotCount,
+    const nextVersion: number = await ctx.runQuery(
+      (internal as any).publishing.getNextVersion,
       {
         environmentId: args.environmentId,
       },
     );
-    const nextVersion = count + 1;
 
     const jsonString = JSON.stringify(data, null, 2);
     const blob = new Blob([jsonString], { type: "application/json" });
@@ -164,10 +170,18 @@ export const publish = action({
     const versionedKey = `${args.appId}/${args.environmentId}/v${nextVersion}.json`;
     const latestKey = `${args.appId}/${args.environmentId}/latest.json`;
 
+    try {
+      await r2.deleteObject(ctx, versionedKey);
+    } catch (e) {}
+
     await r2.store(ctx, blob, {
       key: versionedKey,
       type: "application/json",
     });
+
+    try {
+      await r2.deleteObject(ctx, latestKey);
+    } catch (e) {}
 
     await r2.store(ctx, blob, {
       key: latestKey,

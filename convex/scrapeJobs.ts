@@ -6,7 +6,7 @@ import {
   internalQuery,
 } from "./_generated/server";
 import { getUser, requireAppAccess } from "./lib/roles";
-import { userMutation } from "./lib/auth";
+import { userMutation, userQuery } from "./lib/auth";
 
 export const createScrapeJobInternal = internalMutation({
   args: {
@@ -102,7 +102,7 @@ export const failScrapeJob = internalMutation({
   },
 });
 
-export const listUserScrapeJobs = query({
+export const listUserScrapeJobs = userQuery({
   args: {
     appId: v.id("apps"),
   },
@@ -121,13 +121,16 @@ export const listUserScrapeJobs = query({
   },
 });
 
-export const getScrapeJobStatus = query({
+export const getScrapeJobStatus = userQuery({
   args: {
     jobId: v.id("scrapeJobs"),
   },
   handler: async (ctx, args) => {
     const job = await ctx.db.get(args.jobId);
     if (!job) throw new Error("Job not found");
+    
+    await requireAppAccess(ctx, job.appId, ["owner", "admin", "member"]);
+    
     return job;
   },
 });

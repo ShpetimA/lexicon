@@ -48,6 +48,7 @@ export function PublishDialog({
     mutateAsync,
     data: publishedResult,
     isPending,
+    reset,
   } = useMutation({
     mutationFn: async (environmentId: Id<"environments">) => {
       return publishAction({ appId, environmentId });
@@ -66,9 +67,17 @@ export function PublishDialog({
     await mutateAsync(selectedEnvironment);
   };
 
+  const handleClose = (newOpen: boolean) => {
+    if (!newOpen) {
+      setSelectedEnvironment(null);
+      reset();
+    }
+    onOpenChange(newOpen);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl overflow-x-hidden">
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="max-w-2xl overflow-x-hidden overflow-y-auto max-h-[90vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Upload className="h-5 w-5" />
@@ -179,23 +188,12 @@ export function PublishDialog({
 
         <DialogFooter>
           {publishedResult ? (
-            <Button
-              onClick={() => {
-                onOpenChange(false);
-                setSelectedEnvironment(null);
-              }}
-            >
+            <Button onClick={() => handleClose(false)}>
               Done
             </Button>
           ) : (
             <>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  onOpenChange(false);
-                  setSelectedEnvironment(null);
-                }}
-              >
+              <Button variant="outline" onClick={() => handleClose(false)}>
                 Cancel
               </Button>
               <Button

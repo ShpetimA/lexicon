@@ -41,7 +41,7 @@ export const list = userQuery({
   },
 });
 
-export const get = userQuery({
+export const get = query({
   args: { id: v.id("globalLocales") },
   handler: async (ctx, args) => {
     return await ctx.db.get(args.id);
