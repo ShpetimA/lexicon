@@ -17,9 +17,9 @@ import {
 import { z } from "zod";
 import { useAppForm } from "@/src/hooks/useAppForm";
 import { toast } from "sonner";
-import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useConvexMutation } from "@convex-dev/react-query";
 
 export const Route = createFileRoute("/signup")({
   component: SignUpPage,
@@ -38,7 +38,12 @@ const signUpSchema = z.object({
 
 function SignUpPage() {
   const navigate = useNavigate();
-  const syncUser = useMutation(api.users.syncUser);
+  const { mutateAsync: syncUser } = useMutation({
+    mutationFn: useConvexMutation(api.users.syncUser),
+    onError: () => {
+      toast.error("Failed to sync user");
+    },
+  });
   const queryClient = useQueryClient();
 
   const form = useAppForm({
